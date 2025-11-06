@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "error_code.proto";
+
+enum c_cmd{
+  LoginReq   = 0;
+  LoginResp  = 1;
+}
+
+service msg_user_service{
+  rpc login(LoginReq) returns (LoginResp);
+}
+
+message LoginReq{
+  string account = 1;
+  string password = 2;
+}
+message LoginResp{
+  Code code = 1;
+  UserInfo user_info = 2;
+}
+
+
+message UserInfo{
+  uint32 chips = 1;
+}

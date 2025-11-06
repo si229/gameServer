@@ -1,4 +1,5 @@
 
 enum cmd{
     msg_base = 0;
+    msg_user = 1;
 }
