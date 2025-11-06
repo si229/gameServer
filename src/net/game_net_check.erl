@@ -4,14 +4,16 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 05. 11月 2025 下午 9:34
+%%% Created : 06. 11月 2025 下午 8:32
 %%%-------------------------------------------------------------------
--module(mod_user).
+-module(game_net_check).
 -author("si").
 
 %% API
--export([login/2]).
+-export([init/2]).
 
-
-login(_,_)->
-    skip.
+init(Req,Opts)->
+    Req1 =cowboy_req:reply(200,#{
+        <<"content-type">>=><<"text/plain">>
+    },<<"ok">>,Req),
+    {ok,Req1,Opts}.

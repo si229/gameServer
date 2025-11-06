@@ -4,14 +4,10 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 05. 11月 2025 下午 9:34
+%%% Created : 06. 11月 2025 下午 8:12
 %%%-------------------------------------------------------------------
--module(mod_user).
+-module(game_ws_handler).
 -author("si").
 
 %% API
--export([login/2]).
-
-
-login(_,_)->
-    skip.
+-export([]).
