@@ -7,10 +7,10 @@
 %%%===================================================================
 %%% cmd
 %%%===================================================================
--define(CMD_MSG_BASE_HEARTBEATREQ, 0). % mod_cmd:0 ccmd:0
--define(CMD_MSG_BASE_HEARTBEATRESP, 1). % mod_cmd:0 ccmd:1
--define(CMD_MSG_USER_LOGINREQ, 512). % mod_cmd:1 ccmd:0
--define(CMD_MSG_USER_LOGINRESP, 513). % mod_cmd:1 ccmd:1
+-define(CMD_MSG_BASE_HEART_BEAT_REQ, 0). % mod_cmd:0 ccmd:0
+-define(CMD_MSG_BASE_HEART_BEAT_RESP, 1). % mod_cmd:0 ccmd:1
+-define(CMD_MSG_USER_LOGIN_REQ, 512). % mod_cmd:1 ccmd:0
+-define(CMD_MSG_USER_LOGIN_RESP, 513). % mod_cmd:1 ccmd:1
 
 -ifdef(INCLUDE_ALL_PB_HRL).
 

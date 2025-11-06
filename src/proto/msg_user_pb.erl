@@ -49,25 +49,25 @@
 -export([gpb_version_source/0]).
 
 -include("msg_user_pb.hrl").
--include("gpb.hrl").
+-include_lib("gpb/include/gpb.hrl").
 
 %% enumerated types
--type c_cmd() :: 'LoginReq' | 'LoginResp'.
+-type c_cmd() :: login_req | 'LoginResp'.
 -type 'Code'() :: ok | fail.
 -export_type([c_cmd/0, 'Code'/0]).
 
 %% message types
--type 'LoginReq'() :: #'LoginReq'{}.
+-type login_req() :: #login_req{}.
 
--type 'LoginResp'() :: #'LoginResp'{}.
+-type login_resp() :: #login_resp{}.
 
--type 'UserInfo'() :: #'UserInfo'{}.
+-type user_info() :: #user_info{}.
 
--type 'Empty'() :: #'Empty'{}.
+-type empty() :: #empty{}.
 
--export_type(['LoginReq'/0, 'LoginResp'/0, 'UserInfo'/0, 'Empty'/0]).
--type '$msg_name'() :: 'LoginReq' | 'LoginResp' | 'UserInfo' | 'Empty'.
--type '$msg'() :: 'LoginReq'() | 'LoginResp'() | 'UserInfo'() | 'Empty'().
+-export_type(['login_req'/0, 'login_resp'/0, 'user_info'/0, 'empty'/0]).
+-type '$msg_name'() :: login_req | login_resp | user_info | empty.
+-type '$msg'() :: login_req() | login_resp() | user_info() | empty().
 -export_type(['$msg_name'/0, '$msg'/0]).
 
 -if(?OTP_RELEASE >= 24).
@@ -91,17 +91,17 @@ encode_msg(Msg, MsgName, Opts) ->
     verify_msg(Msg, MsgName, Opts),
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'LoginReq' -> encode_msg_LoginReq(id(Msg, TrUserData), TrUserData);
-        'LoginResp' -> encode_msg_LoginResp(id(Msg, TrUserData), TrUserData);
-        'UserInfo' -> encode_msg_UserInfo(id(Msg, TrUserData), TrUserData);
-        'Empty' -> encode_msg_Empty(id(Msg, TrUserData), TrUserData)
+        login_req -> encode_msg_login_req(id(Msg, TrUserData), TrUserData);
+        login_resp -> encode_msg_login_resp(id(Msg, TrUserData), TrUserData);
+        user_info -> encode_msg_user_info(id(Msg, TrUserData), TrUserData);
+        empty -> encode_msg_empty(id(Msg, TrUserData), TrUserData)
     end.
 
 
-encode_msg_LoginReq(Msg, TrUserData) -> encode_msg_LoginReq(Msg, <<>>, TrUserData).
+encode_msg_login_req(Msg, TrUserData) -> encode_msg_login_req(Msg, <<>>, TrUserData).
 
 
-encode_msg_LoginReq(#'LoginReq'{account = F1, password = F2}, Bin, TrUserData) ->
+encode_msg_login_req(#login_req{account = F1, password = F2}, Bin, TrUserData) ->
     B1 = if F1 == undefined -> Bin;
             true ->
                 begin
@@ -123,10 +123,10 @@ encode_msg_LoginReq(#'LoginReq'{account = F1, password = F2}, Bin, TrUserData) -
            end
     end.
 
-encode_msg_LoginResp(Msg, TrUserData) -> encode_msg_LoginResp(Msg, <<>>, TrUserData).
+encode_msg_login_resp(Msg, TrUserData) -> encode_msg_login_resp(Msg, <<>>, TrUserData).
 
 
-encode_msg_LoginResp(#'LoginResp'{code = F1, user_info = F2}, Bin, TrUserData) ->
+encode_msg_login_resp(#login_resp{code = F1, user_info = F2}, Bin, TrUserData) ->
     B1 = if F1 == undefined -> Bin;
             true ->
                 begin
@@ -141,15 +141,15 @@ encode_msg_LoginResp(#'LoginResp'{code = F1, user_info = F2}, Bin, TrUserData) -
            begin
                TrF2 = id(F2, TrUserData),
                if TrF2 =:= undefined -> B1;
-                  true -> e_mfield_LoginResp_user_info(TrF2, <<B1/binary, 18>>, TrUserData)
+                  true -> e_mfield_login_resp_user_info(TrF2, <<B1/binary, 18>>, TrUserData)
                end
            end
     end.
 
-encode_msg_UserInfo(Msg, TrUserData) -> encode_msg_UserInfo(Msg, <<>>, TrUserData).
+encode_msg_user_info(Msg, TrUserData) -> encode_msg_user_info(Msg, <<>>, TrUserData).
 
 
-encode_msg_UserInfo(#'UserInfo'{chips = F1}, Bin, TrUserData) ->
+encode_msg_user_info(#user_info{chips = F1}, Bin, TrUserData) ->
     if F1 == undefined -> Bin;
        true ->
            begin
@@ -160,10 +160,10 @@ encode_msg_UserInfo(#'UserInfo'{chips = F1}, Bin, TrUserData) ->
            end
     end.
 
-encode_msg_Empty(_Msg, _TrUserData) -> <<>>.
+encode_msg_empty(_Msg, _TrUserData) -> <<>>.
 
-e_mfield_LoginResp_user_info(Msg, Bin, TrUserData) ->
-    SubBin = encode_msg_UserInfo(Msg, <<>>, TrUserData),
+e_mfield_login_resp_user_info(Msg, Bin, TrUserData) ->
+    SubBin = encode_msg_user_info(Msg, <<>>, TrUserData),
     Bin2 = e_varint(byte_size(SubBin), Bin),
     <<Bin2/binary, SubBin/binary>>.
 
@@ -309,200 +309,200 @@ decode_msg_1_catch(Bin, MsgName, TrUserData) ->
     end.
 -endif.
 
-decode_msg_2_doit('LoginReq', Bin, TrUserData) -> id(decode_msg_LoginReq(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('LoginResp', Bin, TrUserData) -> id(decode_msg_LoginResp(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('UserInfo', Bin, TrUserData) -> id(decode_msg_UserInfo(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('Empty', Bin, TrUserData) -> id(decode_msg_Empty(Bin, TrUserData), TrUserData).
+decode_msg_2_doit(login_req, Bin, TrUserData) -> id(decode_msg_login_req(Bin, TrUserData), TrUserData);
+decode_msg_2_doit(login_resp, Bin, TrUserData) -> id(decode_msg_login_resp(Bin, TrUserData), TrUserData);
+decode_msg_2_doit(user_info, Bin, TrUserData) -> id(decode_msg_user_info(Bin, TrUserData), TrUserData);
+decode_msg_2_doit(empty, Bin, TrUserData) -> id(decode_msg_empty(Bin, TrUserData), TrUserData).
 
 
 
-decode_msg_LoginReq(Bin, TrUserData) -> dfp_read_field_def_LoginReq(Bin, 0, 0, 0, id(<<>>, TrUserData), id(<<>>, TrUserData), TrUserData).
+decode_msg_login_req(Bin, TrUserData) -> dfp_read_field_def_login_req(Bin, 0, 0, 0, id(<<>>, TrUserData), id(<<>>, TrUserData), TrUserData).
 
-dfp_read_field_def_LoginReq(<<10, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_LoginReq_account(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-dfp_read_field_def_LoginReq(<<18, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_LoginReq_password(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-dfp_read_field_def_LoginReq(<<>>, 0, 0, _, F@_1, F@_2, _) -> #'LoginReq'{account = F@_1, password = F@_2};
-dfp_read_field_def_LoginReq(Other, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dg_read_field_def_LoginReq(Other, Z1, Z2, F, F@_1, F@_2, TrUserData).
+dfp_read_field_def_login_req(<<10, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_login_req_account(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+dfp_read_field_def_login_req(<<18, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_login_req_password(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+dfp_read_field_def_login_req(<<>>, 0, 0, _, F@_1, F@_2, _) -> #login_req{account = F@_1, password = F@_2};
+dfp_read_field_def_login_req(Other, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dg_read_field_def_login_req(Other, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-dg_read_field_def_LoginReq(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 32 - 7 -> dg_read_field_def_LoginReq(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-dg_read_field_def_LoginReq(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, F@_2, TrUserData) ->
+dg_read_field_def_login_req(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 32 - 7 -> dg_read_field_def_login_req(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+dg_read_field_def_login_req(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, F@_2, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
-        10 -> d_field_LoginReq_account(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
-        18 -> d_field_LoginReq_password(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
+        10 -> d_field_login_req_account(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
+        18 -> d_field_login_req_password(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
         _ ->
             case Key band 7 of
-                0 -> skip_varint_LoginReq(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                1 -> skip_64_LoginReq(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                2 -> skip_length_delimited_LoginReq(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                3 -> skip_group_LoginReq(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                5 -> skip_32_LoginReq(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData)
+                0 -> skip_varint_login_req(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                1 -> skip_64_login_req(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                2 -> skip_length_delimited_login_req(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                3 -> skip_group_login_req(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                5 -> skip_32_login_req(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData)
             end
     end;
-dg_read_field_def_LoginReq(<<>>, 0, 0, _, F@_1, F@_2, _) -> #'LoginReq'{account = F@_1, password = F@_2}.
+dg_read_field_def_login_req(<<>>, 0, 0, _, F@_1, F@_2, _) -> #login_req{account = F@_1, password = F@_2}.
 
-d_field_LoginReq_account(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_LoginReq_account(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-d_field_LoginReq_account(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, F@_2, TrUserData) ->
+d_field_login_req_account(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_login_req_account(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+d_field_login_req_account(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, F@_2, TrUserData) ->
     {NewFValue, RestF} = begin Len = X bsl N + Acc, <<Bytes:Len/binary, Rest2/binary>> = Rest, Bytes2 = binary:copy(Bytes), {id(Bytes2, TrUserData), Rest2} end,
-    dfp_read_field_def_LoginReq(RestF, 0, 0, F, NewFValue, F@_2, TrUserData).
+    dfp_read_field_def_login_req(RestF, 0, 0, F, NewFValue, F@_2, TrUserData).
 
-d_field_LoginReq_password(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_LoginReq_password(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-d_field_LoginReq_password(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, _, TrUserData) ->
+d_field_login_req_password(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_login_req_password(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+d_field_login_req_password(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, _, TrUserData) ->
     {NewFValue, RestF} = begin Len = X bsl N + Acc, <<Bytes:Len/binary, Rest2/binary>> = Rest, Bytes2 = binary:copy(Bytes), {id(Bytes2, TrUserData), Rest2} end,
-    dfp_read_field_def_LoginReq(RestF, 0, 0, F, F@_1, NewFValue, TrUserData).
+    dfp_read_field_def_login_req(RestF, 0, 0, F, F@_1, NewFValue, TrUserData).
 
-skip_varint_LoginReq(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> skip_varint_LoginReq(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-skip_varint_LoginReq(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginReq(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_varint_login_req(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> skip_varint_login_req(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+skip_varint_login_req(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_req(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-skip_length_delimited_LoginReq(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> skip_length_delimited_LoginReq(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-skip_length_delimited_LoginReq(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) ->
+skip_length_delimited_login_req(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> skip_length_delimited_login_req(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+skip_length_delimited_login_req(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_LoginReq(Rest2, 0, 0, F, F@_1, F@_2, TrUserData).
+    dfp_read_field_def_login_req(Rest2, 0, 0, F, F@_1, F@_2, TrUserData).
 
-skip_group_LoginReq(Bin, _, Z2, FNum, F@_1, F@_2, TrUserData) ->
+skip_group_login_req(Bin, _, Z2, FNum, F@_1, F@_2, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_LoginReq(Rest, 0, Z2, FNum, F@_1, F@_2, TrUserData).
+    dfp_read_field_def_login_req(Rest, 0, Z2, FNum, F@_1, F@_2, TrUserData).
 
-skip_32_LoginReq(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginReq(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_32_login_req(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_req(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-skip_64_LoginReq(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginReq(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_64_login_req(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_req(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-decode_msg_LoginResp(Bin, TrUserData) -> dfp_read_field_def_LoginResp(Bin, 0, 0, 0, id(ok, TrUserData), id(undefined, TrUserData), TrUserData).
+decode_msg_login_resp(Bin, TrUserData) -> dfp_read_field_def_login_resp(Bin, 0, 0, 0, id(ok, TrUserData), id(undefined, TrUserData), TrUserData).
 
-dfp_read_field_def_LoginResp(<<8, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_LoginResp_code(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-dfp_read_field_def_LoginResp(<<18, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_LoginResp_user_info(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-dfp_read_field_def_LoginResp(<<>>, 0, 0, _, F@_1, F@_2, _) -> #'LoginResp'{code = F@_1, user_info = F@_2};
-dfp_read_field_def_LoginResp(Other, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dg_read_field_def_LoginResp(Other, Z1, Z2, F, F@_1, F@_2, TrUserData).
+dfp_read_field_def_login_resp(<<8, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_login_resp_code(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+dfp_read_field_def_login_resp(<<18, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> d_field_login_resp_user_info(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+dfp_read_field_def_login_resp(<<>>, 0, 0, _, F@_1, F@_2, _) -> #login_resp{code = F@_1, user_info = F@_2};
+dfp_read_field_def_login_resp(Other, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dg_read_field_def_login_resp(Other, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-dg_read_field_def_LoginResp(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 32 - 7 -> dg_read_field_def_LoginResp(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-dg_read_field_def_LoginResp(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, F@_2, TrUserData) ->
+dg_read_field_def_login_resp(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 32 - 7 -> dg_read_field_def_login_resp(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+dg_read_field_def_login_resp(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, F@_2, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
-        8 -> d_field_LoginResp_code(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
-        18 -> d_field_LoginResp_user_info(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
+        8 -> d_field_login_resp_code(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
+        18 -> d_field_login_resp_user_info(Rest, 0, 0, 0, F@_1, F@_2, TrUserData);
         _ ->
             case Key band 7 of
-                0 -> skip_varint_LoginResp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                1 -> skip_64_LoginResp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                2 -> skip_length_delimited_LoginResp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                3 -> skip_group_LoginResp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
-                5 -> skip_32_LoginResp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData)
+                0 -> skip_varint_login_resp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                1 -> skip_64_login_resp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                2 -> skip_length_delimited_login_resp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                3 -> skip_group_login_resp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData);
+                5 -> skip_32_login_resp(Rest, 0, 0, Key bsr 3, F@_1, F@_2, TrUserData)
             end
     end;
-dg_read_field_def_LoginResp(<<>>, 0, 0, _, F@_1, F@_2, _) -> #'LoginResp'{code = F@_1, user_info = F@_2}.
+dg_read_field_def_login_resp(<<>>, 0, 0, _, F@_1, F@_2, _) -> #login_resp{code = F@_1, user_info = F@_2}.
 
-d_field_LoginResp_code(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_LoginResp_code(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-d_field_LoginResp_code(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, F@_2, TrUserData) ->
+d_field_login_resp_code(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_login_resp_code(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+d_field_login_resp_code(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, F@_2, TrUserData) ->
     {NewFValue, RestF} = {id(d_enum_Code(begin <<Res:32/signed-native>> = <<(X bsl N + Acc):32/unsigned-native>>, id(Res, TrUserData) end), TrUserData), Rest},
-    dfp_read_field_def_LoginResp(RestF, 0, 0, F, NewFValue, F@_2, TrUserData).
+    dfp_read_field_def_login_resp(RestF, 0, 0, F, NewFValue, F@_2, TrUserData).
 
-d_field_LoginResp_user_info(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_LoginResp_user_info(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-d_field_LoginResp_user_info(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, Prev, TrUserData) ->
-    {NewFValue, RestF} = begin Len = X bsl N + Acc, <<Bs:Len/binary, Rest2/binary>> = Rest, {id(decode_msg_UserInfo(Bs, TrUserData), TrUserData), Rest2} end,
-    dfp_read_field_def_LoginResp(RestF,
-                                 0,
-                                 0,
-                                 F,
-                                 F@_1,
-                                 if Prev == undefined -> NewFValue;
-                                    true -> merge_msg_UserInfo(Prev, NewFValue, TrUserData)
-                                 end,
-                                 TrUserData).
+d_field_login_resp_user_info(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> d_field_login_resp_user_info(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+d_field_login_resp_user_info(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, Prev, TrUserData) ->
+    {NewFValue, RestF} = begin Len = X bsl N + Acc, <<Bs:Len/binary, Rest2/binary>> = Rest, {id(decode_msg_user_info(Bs, TrUserData), TrUserData), Rest2} end,
+    dfp_read_field_def_login_resp(RestF,
+                                  0,
+                                  0,
+                                  F,
+                                  F@_1,
+                                  if Prev == undefined -> NewFValue;
+                                     true -> merge_msg_user_info(Prev, NewFValue, TrUserData)
+                                  end,
+                                  TrUserData).
 
-skip_varint_LoginResp(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> skip_varint_LoginResp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
-skip_varint_LoginResp(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginResp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_varint_login_resp(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> skip_varint_login_resp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData);
+skip_varint_login_resp(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_resp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-skip_length_delimited_LoginResp(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> skip_length_delimited_LoginResp(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
-skip_length_delimited_LoginResp(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) ->
+skip_length_delimited_login_resp(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) when N < 57 -> skip_length_delimited_login_resp(Rest, N + 7, X bsl N + Acc, F, F@_1, F@_2, TrUserData);
+skip_length_delimited_login_resp(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, F@_2, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_LoginResp(Rest2, 0, 0, F, F@_1, F@_2, TrUserData).
+    dfp_read_field_def_login_resp(Rest2, 0, 0, F, F@_1, F@_2, TrUserData).
 
-skip_group_LoginResp(Bin, _, Z2, FNum, F@_1, F@_2, TrUserData) ->
+skip_group_login_resp(Bin, _, Z2, FNum, F@_1, F@_2, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_LoginResp(Rest, 0, Z2, FNum, F@_1, F@_2, TrUserData).
+    dfp_read_field_def_login_resp(Rest, 0, Z2, FNum, F@_1, F@_2, TrUserData).
 
-skip_32_LoginResp(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginResp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_32_login_resp(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_resp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-skip_64_LoginResp(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_LoginResp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
+skip_64_login_resp(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, F@_2, TrUserData) -> dfp_read_field_def_login_resp(Rest, Z1, Z2, F, F@_1, F@_2, TrUserData).
 
-decode_msg_UserInfo(Bin, TrUserData) -> dfp_read_field_def_UserInfo(Bin, 0, 0, 0, id(0, TrUserData), TrUserData).
+decode_msg_user_info(Bin, TrUserData) -> dfp_read_field_def_user_info(Bin, 0, 0, 0, id(0, TrUserData), TrUserData).
 
-dfp_read_field_def_UserInfo(<<8, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> d_field_UserInfo_chips(Rest, Z1, Z2, F, F@_1, TrUserData);
-dfp_read_field_def_UserInfo(<<>>, 0, 0, _, F@_1, _) -> #'UserInfo'{chips = F@_1};
-dfp_read_field_def_UserInfo(Other, Z1, Z2, F, F@_1, TrUserData) -> dg_read_field_def_UserInfo(Other, Z1, Z2, F, F@_1, TrUserData).
+dfp_read_field_def_user_info(<<8, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> d_field_user_info_chips(Rest, Z1, Z2, F, F@_1, TrUserData);
+dfp_read_field_def_user_info(<<>>, 0, 0, _, F@_1, _) -> #user_info{chips = F@_1};
+dfp_read_field_def_user_info(Other, Z1, Z2, F, F@_1, TrUserData) -> dg_read_field_def_user_info(Other, Z1, Z2, F, F@_1, TrUserData).
 
-dg_read_field_def_UserInfo(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 32 - 7 -> dg_read_field_def_UserInfo(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
-dg_read_field_def_UserInfo(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, TrUserData) ->
+dg_read_field_def_user_info(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 32 - 7 -> dg_read_field_def_user_info(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
+dg_read_field_def_user_info(<<0:1, X:7, Rest/binary>>, N, Acc, _, F@_1, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
-        8 -> d_field_UserInfo_chips(Rest, 0, 0, 0, F@_1, TrUserData);
+        8 -> d_field_user_info_chips(Rest, 0, 0, 0, F@_1, TrUserData);
         _ ->
             case Key band 7 of
-                0 -> skip_varint_UserInfo(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
-                1 -> skip_64_UserInfo(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
-                2 -> skip_length_delimited_UserInfo(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
-                3 -> skip_group_UserInfo(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
-                5 -> skip_32_UserInfo(Rest, 0, 0, Key bsr 3, F@_1, TrUserData)
+                0 -> skip_varint_user_info(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
+                1 -> skip_64_user_info(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
+                2 -> skip_length_delimited_user_info(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
+                3 -> skip_group_user_info(Rest, 0, 0, Key bsr 3, F@_1, TrUserData);
+                5 -> skip_32_user_info(Rest, 0, 0, Key bsr 3, F@_1, TrUserData)
             end
     end;
-dg_read_field_def_UserInfo(<<>>, 0, 0, _, F@_1, _) -> #'UserInfo'{chips = F@_1}.
+dg_read_field_def_user_info(<<>>, 0, 0, _, F@_1, _) -> #user_info{chips = F@_1}.
 
-d_field_UserInfo_chips(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 57 -> d_field_UserInfo_chips(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
-d_field_UserInfo_chips(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, TrUserData) ->
+d_field_user_info_chips(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 57 -> d_field_user_info_chips(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
+d_field_user_info_chips(<<0:1, X:7, Rest/binary>>, N, Acc, F, _, TrUserData) ->
     {NewFValue, RestF} = {id((X bsl N + Acc) band 4294967295, TrUserData), Rest},
-    dfp_read_field_def_UserInfo(RestF, 0, 0, F, NewFValue, TrUserData).
+    dfp_read_field_def_user_info(RestF, 0, 0, F, NewFValue, TrUserData).
 
-skip_varint_UserInfo(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> skip_varint_UserInfo(Rest, Z1, Z2, F, F@_1, TrUserData);
-skip_varint_UserInfo(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_UserInfo(Rest, Z1, Z2, F, F@_1, TrUserData).
+skip_varint_user_info(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> skip_varint_user_info(Rest, Z1, Z2, F, F@_1, TrUserData);
+skip_varint_user_info(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_user_info(Rest, Z1, Z2, F, F@_1, TrUserData).
 
-skip_length_delimited_UserInfo(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 57 -> skip_length_delimited_UserInfo(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
-skip_length_delimited_UserInfo(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) ->
+skip_length_delimited_user_info(<<1:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) when N < 57 -> skip_length_delimited_user_info(Rest, N + 7, X bsl N + Acc, F, F@_1, TrUserData);
+skip_length_delimited_user_info(<<0:1, X:7, Rest/binary>>, N, Acc, F, F@_1, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_UserInfo(Rest2, 0, 0, F, F@_1, TrUserData).
+    dfp_read_field_def_user_info(Rest2, 0, 0, F, F@_1, TrUserData).
 
-skip_group_UserInfo(Bin, _, Z2, FNum, F@_1, TrUserData) ->
+skip_group_user_info(Bin, _, Z2, FNum, F@_1, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_UserInfo(Rest, 0, Z2, FNum, F@_1, TrUserData).
+    dfp_read_field_def_user_info(Rest, 0, Z2, FNum, F@_1, TrUserData).
 
-skip_32_UserInfo(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_UserInfo(Rest, Z1, Z2, F, F@_1, TrUserData).
+skip_32_user_info(<<_:32, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_user_info(Rest, Z1, Z2, F, F@_1, TrUserData).
 
-skip_64_UserInfo(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_UserInfo(Rest, Z1, Z2, F, F@_1, TrUserData).
+skip_64_user_info(<<_:64, Rest/binary>>, Z1, Z2, F, F@_1, TrUserData) -> dfp_read_field_def_user_info(Rest, Z1, Z2, F, F@_1, TrUserData).
 
-decode_msg_Empty(Bin, TrUserData) -> dfp_read_field_def_Empty(Bin, 0, 0, 0, TrUserData).
+decode_msg_empty(Bin, TrUserData) -> dfp_read_field_def_empty(Bin, 0, 0, 0, TrUserData).
 
-dfp_read_field_def_Empty(<<>>, 0, 0, _, _) -> #'Empty'{};
-dfp_read_field_def_Empty(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_Empty(Other, Z1, Z2, F, TrUserData).
+dfp_read_field_def_empty(<<>>, 0, 0, _, _) -> #empty{};
+dfp_read_field_def_empty(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_empty(Other, Z1, Z2, F, TrUserData).
 
-dg_read_field_def_Empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_Empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-dg_read_field_def_Empty(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
+dg_read_field_def_empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+dg_read_field_def_empty(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
     Key = X bsl N + Acc,
     case Key band 7 of
-        0 -> skip_varint_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        1 -> skip_64_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        2 -> skip_length_delimited_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        3 -> skip_group_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        5 -> skip_32_Empty(Rest, 0, 0, Key bsr 3, TrUserData)
+        0 -> skip_varint_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        1 -> skip_64_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        2 -> skip_length_delimited_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        3 -> skip_group_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        5 -> skip_32_empty(Rest, 0, 0, Key bsr 3, TrUserData)
     end;
-dg_read_field_def_Empty(<<>>, 0, 0, _, _) -> #'Empty'{}.
+dg_read_field_def_empty(<<>>, 0, 0, _, _) -> #empty{}.
 
-skip_varint_Empty(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_Empty(Rest, Z1, Z2, F, TrUserData);
-skip_varint_Empty(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_varint_empty(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_empty(Rest, Z1, Z2, F, TrUserData);
+skip_varint_empty(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
-skip_length_delimited_Empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_Empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-skip_length_delimited_Empty(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
+skip_length_delimited_empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+skip_length_delimited_empty(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_Empty(Rest2, 0, 0, F, TrUserData).
+    dfp_read_field_def_empty(Rest2, 0, 0, F, TrUserData).
 
-skip_group_Empty(Bin, _, Z2, FNum, TrUserData) ->
+skip_group_empty(Bin, _, Z2, FNum, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_Empty(Rest, 0, Z2, FNum, TrUserData).
+    dfp_read_field_def_empty(Rest, 0, Z2, FNum, TrUserData).
 
-skip_32_Empty(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_32_empty(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
-skip_64_Empty(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_64_empty(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
 d_enum_Code(0) -> ok;
 d_enum_Code(1) -> fail;
@@ -574,44 +574,44 @@ merge_msgs(Prev, New, Opts) when element(1, Prev) =:= element(1, New), is_list(O
 merge_msgs(Prev, New, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'LoginReq' -> merge_msg_LoginReq(Prev, New, TrUserData);
-        'LoginResp' -> merge_msg_LoginResp(Prev, New, TrUserData);
-        'UserInfo' -> merge_msg_UserInfo(Prev, New, TrUserData);
-        'Empty' -> merge_msg_Empty(Prev, New, TrUserData)
+        login_req -> merge_msg_login_req(Prev, New, TrUserData);
+        login_resp -> merge_msg_login_resp(Prev, New, TrUserData);
+        user_info -> merge_msg_user_info(Prev, New, TrUserData);
+        empty -> merge_msg_empty(Prev, New, TrUserData)
     end.
 
--compile({nowarn_unused_function,merge_msg_LoginReq/3}).
-merge_msg_LoginReq(#'LoginReq'{account = PFaccount, password = PFpassword}, #'LoginReq'{account = NFaccount, password = NFpassword}, _) ->
-    #'LoginReq'{account =
-                    if NFaccount =:= undefined -> PFaccount;
-                       true -> NFaccount
+-compile({nowarn_unused_function,merge_msg_login_req/3}).
+merge_msg_login_req(#login_req{account = PFaccount, password = PFpassword}, #login_req{account = NFaccount, password = NFpassword}, _) ->
+    #login_req{account =
+                   if NFaccount =:= undefined -> PFaccount;
+                      true -> NFaccount
+                   end,
+               password =
+                   if NFpassword =:= undefined -> PFpassword;
+                      true -> NFpassword
+                   end}.
+
+-compile({nowarn_unused_function,merge_msg_login_resp/3}).
+merge_msg_login_resp(#login_resp{code = PFcode, user_info = PFuser_info}, #login_resp{code = NFcode, user_info = NFuser_info}, TrUserData) ->
+    #login_resp{code =
+                    if NFcode =:= undefined -> PFcode;
+                       true -> NFcode
                     end,
-                password =
-                    if NFpassword =:= undefined -> PFpassword;
-                       true -> NFpassword
+                user_info =
+                    if PFuser_info /= undefined, NFuser_info /= undefined -> merge_msg_user_info(PFuser_info, NFuser_info, TrUserData);
+                       PFuser_info == undefined -> NFuser_info;
+                       NFuser_info == undefined -> PFuser_info
                     end}.
 
--compile({nowarn_unused_function,merge_msg_LoginResp/3}).
-merge_msg_LoginResp(#'LoginResp'{code = PFcode, user_info = PFuser_info}, #'LoginResp'{code = NFcode, user_info = NFuser_info}, TrUserData) ->
-    #'LoginResp'{code =
-                     if NFcode =:= undefined -> PFcode;
-                        true -> NFcode
-                     end,
-                 user_info =
-                     if PFuser_info /= undefined, NFuser_info /= undefined -> merge_msg_UserInfo(PFuser_info, NFuser_info, TrUserData);
-                        PFuser_info == undefined -> NFuser_info;
-                        NFuser_info == undefined -> PFuser_info
-                     end}.
+-compile({nowarn_unused_function,merge_msg_user_info/3}).
+merge_msg_user_info(#user_info{chips = PFchips}, #user_info{chips = NFchips}, _) ->
+    #user_info{chips =
+                   if NFchips =:= undefined -> PFchips;
+                      true -> NFchips
+                   end}.
 
--compile({nowarn_unused_function,merge_msg_UserInfo/3}).
-merge_msg_UserInfo(#'UserInfo'{chips = PFchips}, #'UserInfo'{chips = NFchips}, _) ->
-    #'UserInfo'{chips =
-                    if NFchips =:= undefined -> PFchips;
-                       true -> NFchips
-                    end}.
-
--compile({nowarn_unused_function,merge_msg_Empty/3}).
-merge_msg_Empty(_Prev, New, _TrUserData) -> New.
+-compile({nowarn_unused_function,merge_msg_empty/3}).
+merge_msg_empty(_Prev, New, _TrUserData) -> New.
 
 
 verify_msg(Msg) when tuple_size(Msg) >= 1 -> verify_msg(Msg, element(1, Msg), []);
@@ -624,17 +624,17 @@ verify_msg(X, _Opts) -> mk_type_error(not_a_known_message, X, []).
 verify_msg(Msg, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'LoginReq' -> v_msg_LoginReq(Msg, [MsgName], TrUserData);
-        'LoginResp' -> v_msg_LoginResp(Msg, [MsgName], TrUserData);
-        'UserInfo' -> v_msg_UserInfo(Msg, [MsgName], TrUserData);
-        'Empty' -> v_msg_Empty(Msg, [MsgName], TrUserData);
+        login_req -> v_msg_login_req(Msg, [MsgName], TrUserData);
+        login_resp -> v_msg_login_resp(Msg, [MsgName], TrUserData);
+        user_info -> v_msg_user_info(Msg, [MsgName], TrUserData);
+        empty -> v_msg_empty(Msg, [MsgName], TrUserData);
         _ -> mk_type_error(not_a_known_message, Msg, [])
     end.
 
 
--compile({nowarn_unused_function,v_msg_LoginReq/3}).
--dialyzer({nowarn_function,v_msg_LoginReq/3}).
-v_msg_LoginReq(#'LoginReq'{account = F1, password = F2}, Path, TrUserData) ->
+-compile({nowarn_unused_function,v_msg_login_req/3}).
+-dialyzer({nowarn_function,v_msg_login_req/3}).
+v_msg_login_req(#login_req{account = F1, password = F2}, Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_type_string(F1, [account | Path], TrUserData)
     end,
@@ -642,37 +642,37 @@ v_msg_LoginReq(#'LoginReq'{account = F1, password = F2}, Path, TrUserData) ->
        true -> v_type_string(F2, [password | Path], TrUserData)
     end,
     ok;
-v_msg_LoginReq(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'LoginReq'}, X, Path).
+v_msg_login_req(X, Path, _TrUserData) -> mk_type_error({expected_msg, login_req}, X, Path).
 
--compile({nowarn_unused_function,v_msg_LoginResp/3}).
--dialyzer({nowarn_function,v_msg_LoginResp/3}).
-v_msg_LoginResp(#'LoginResp'{code = F1, user_info = F2}, Path, TrUserData) ->
+-compile({nowarn_unused_function,v_msg_login_resp/3}).
+-dialyzer({nowarn_function,v_msg_login_resp/3}).
+v_msg_login_resp(#login_resp{code = F1, user_info = F2}, Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_enum_Code(F1, [code | Path], TrUserData)
     end,
     if F2 == undefined -> ok;
-       true -> v_submsg_UserInfo(F2, [user_info | Path], TrUserData)
+       true -> v_submsg_user_info(F2, [user_info | Path], TrUserData)
     end,
     ok;
-v_msg_LoginResp(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'LoginResp'}, X, Path).
+v_msg_login_resp(X, Path, _TrUserData) -> mk_type_error({expected_msg, login_resp}, X, Path).
 
--compile({nowarn_unused_function,v_submsg_UserInfo/3}).
--dialyzer({nowarn_function,v_submsg_UserInfo/3}).
-v_submsg_UserInfo(Msg, Path, TrUserData) -> v_msg_UserInfo(Msg, Path, TrUserData).
+-compile({nowarn_unused_function,v_submsg_user_info/3}).
+-dialyzer({nowarn_function,v_submsg_user_info/3}).
+v_submsg_user_info(Msg, Path, TrUserData) -> v_msg_user_info(Msg, Path, TrUserData).
 
--compile({nowarn_unused_function,v_msg_UserInfo/3}).
--dialyzer({nowarn_function,v_msg_UserInfo/3}).
-v_msg_UserInfo(#'UserInfo'{chips = F1}, Path, TrUserData) ->
+-compile({nowarn_unused_function,v_msg_user_info/3}).
+-dialyzer({nowarn_function,v_msg_user_info/3}).
+v_msg_user_info(#user_info{chips = F1}, Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_type_uint32(F1, [chips | Path], TrUserData)
     end,
     ok;
-v_msg_UserInfo(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'UserInfo'}, X, Path).
+v_msg_user_info(X, Path, _TrUserData) -> mk_type_error({expected_msg, user_info}, X, Path).
 
--compile({nowarn_unused_function,v_msg_Empty/3}).
--dialyzer({nowarn_function,v_msg_Empty/3}).
-v_msg_Empty(#'Empty'{}, _Path, _) -> ok;
-v_msg_Empty(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'Empty'}, X, Path).
+-compile({nowarn_unused_function,v_msg_empty/3}).
+-dialyzer({nowarn_function,v_msg_empty/3}).
+v_msg_empty(#empty{}, _Path, _) -> ok;
+v_msg_empty(X, Path, _TrUserData) -> mk_type_error({expected_msg, empty}, X, Path).
 
 -compile({nowarn_unused_function,v_enum_Code/3}).
 -dialyzer({nowarn_function,v_enum_Code/3}).
@@ -736,21 +736,21 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 
 
 get_msg_defs() ->
-    [{{enum, c_cmd}, [{'LoginReq', 0}, {'LoginResp', 1}]},
+    [{{enum, c_cmd}, [{login_req, 0}, {'LoginResp', 1}]},
      {{enum, 'Code'}, [{ok, 0}, {fail, 1}]},
-     {{msg, 'LoginReq'}, [#field{name = account, fnum = 1, rnum = 2, type = string, occurrence = optional, opts = []}, #field{name = password, fnum = 2, rnum = 3, type = string, occurrence = optional, opts = []}]},
-     {{msg, 'LoginResp'}, [#field{name = code, fnum = 1, rnum = 2, type = {enum, 'Code'}, occurrence = optional, opts = []}, #field{name = user_info, fnum = 2, rnum = 3, type = {msg, 'UserInfo'}, occurrence = optional, opts = []}]},
-     {{msg, 'UserInfo'}, [#field{name = chips, fnum = 1, rnum = 2, type = uint32, occurrence = optional, opts = []}]},
-     {{msg, 'Empty'}, []}].
+     {{msg, login_req}, [#field{name = account, fnum = 1, rnum = 2, type = string, occurrence = optional, opts = []}, #field{name = password, fnum = 2, rnum = 3, type = string, occurrence = optional, opts = []}]},
+     {{msg, login_resp}, [#field{name = code, fnum = 1, rnum = 2, type = {enum, 'Code'}, occurrence = optional, opts = []}, #field{name = user_info, fnum = 2, rnum = 3, type = {msg, user_info}, occurrence = optional, opts = []}]},
+     {{msg, user_info}, [#field{name = chips, fnum = 1, rnum = 2, type = uint32, occurrence = optional, opts = []}]},
+     {{msg, empty}, []}].
 
 
-get_msg_names() -> ['LoginReq', 'LoginResp', 'UserInfo', 'Empty'].
+get_msg_names() -> [login_req, login_resp, user_info, empty].
 
 
 get_group_names() -> [].
 
 
-get_msg_or_group_names() -> ['LoginReq', 'LoginResp', 'UserInfo', 'Empty'].
+get_msg_or_group_names() -> [login_req, login_resp, user_info, empty].
 
 
 get_enum_names() -> [c_cmd, 'Code'].
@@ -770,14 +770,14 @@ fetch_enum_def(EnumName) ->
     end.
 
 
-find_msg_def('LoginReq') -> [#field{name = account, fnum = 1, rnum = 2, type = string, occurrence = optional, opts = []}, #field{name = password, fnum = 2, rnum = 3, type = string, occurrence = optional, opts = []}];
-find_msg_def('LoginResp') -> [#field{name = code, fnum = 1, rnum = 2, type = {enum, 'Code'}, occurrence = optional, opts = []}, #field{name = user_info, fnum = 2, rnum = 3, type = {msg, 'UserInfo'}, occurrence = optional, opts = []}];
-find_msg_def('UserInfo') -> [#field{name = chips, fnum = 1, rnum = 2, type = uint32, occurrence = optional, opts = []}];
-find_msg_def('Empty') -> [];
+find_msg_def(login_req) -> [#field{name = account, fnum = 1, rnum = 2, type = string, occurrence = optional, opts = []}, #field{name = password, fnum = 2, rnum = 3, type = string, occurrence = optional, opts = []}];
+find_msg_def(login_resp) -> [#field{name = code, fnum = 1, rnum = 2, type = {enum, 'Code'}, occurrence = optional, opts = []}, #field{name = user_info, fnum = 2, rnum = 3, type = {msg, user_info}, occurrence = optional, opts = []}];
+find_msg_def(user_info) -> [#field{name = chips, fnum = 1, rnum = 2, type = uint32, occurrence = optional, opts = []}];
+find_msg_def(empty) -> [];
 find_msg_def(_) -> error.
 
 
-find_enum_def(c_cmd) -> [{'LoginReq', 0}, {'LoginResp', 1}];
+find_enum_def(c_cmd) -> [{login_req, 0}, {'LoginResp', 1}];
 find_enum_def('Code') -> [{ok, 0}, {fail, 1}];
 find_enum_def(_) -> error.
 
@@ -790,11 +790,11 @@ enum_value_by_symbol(c_cmd, Sym) -> enum_value_by_symbol_c_cmd(Sym);
 enum_value_by_symbol('Code', Sym) -> enum_value_by_symbol_Code(Sym).
 
 
-enum_symbol_by_value_c_cmd(0) -> 'LoginReq';
+enum_symbol_by_value_c_cmd(0) -> login_req;
 enum_symbol_by_value_c_cmd(1) -> 'LoginResp'.
 
 
-enum_value_by_symbol_c_cmd('LoginReq') -> 0;
+enum_value_by_symbol_c_cmd(login_req) -> 0;
 enum_value_by_symbol_c_cmd('LoginResp') -> 1.
 
 enum_symbol_by_value_Code(0) -> ok;
@@ -808,7 +808,7 @@ enum_value_by_symbol_Code(fail) -> 1.
 get_service_names() -> [msg_user_service].
 
 
-get_service_def(msg_user_service) -> {{service, msg_user_service}, [#rpc{name = login, input = 'LoginReq', output = 'LoginResp', input_stream = false, output_stream = false, opts = []}]};
+get_service_def(msg_user_service) -> {{service, msg_user_service}, [#rpc{name = login, input = login_req, output = login_resp, input_stream = false, output_stream = false, opts = []}]};
 get_service_def(_) -> error.
 
 
@@ -820,7 +820,7 @@ find_rpc_def(msg_user_service, RpcName) -> find_rpc_def_msg_user_service(RpcName
 find_rpc_def(_, _) -> error.
 
 
-find_rpc_def_msg_user_service(login) -> #rpc{name = login, input = 'LoginReq', output = 'LoginResp', input_stream = false, output_stream = false, opts = []};
+find_rpc_def_msg_user_service(login) -> #rpc{name = login, input = login_req, output = login_resp, input_stream = false, output_stream = false, opts = []};
 find_rpc_def_msg_user_service(_) -> error.
 
 
@@ -857,17 +857,17 @@ service_and_rpc_name_to_fqbins(msg_user_service, login) -> {<<"google.protobuf.m
 service_and_rpc_name_to_fqbins(S, R) -> error({gpb_error, {badservice_or_rpc, {S, R}}}).
 
 
-fqbin_to_msg_name(<<"google.protobuf.LoginReq">>) -> 'LoginReq';
-fqbin_to_msg_name(<<"google.protobuf.LoginResp">>) -> 'LoginResp';
-fqbin_to_msg_name(<<"google.protobuf.UserInfo">>) -> 'UserInfo';
-fqbin_to_msg_name(<<"google.protobuf.Empty">>) -> 'Empty';
+fqbin_to_msg_name(<<"google.protobuf.login_req">>) -> login_req;
+fqbin_to_msg_name(<<"google.protobuf.login_resp">>) -> login_resp;
+fqbin_to_msg_name(<<"google.protobuf.user_info">>) -> user_info;
+fqbin_to_msg_name(<<"google.protobuf.Empty">>) -> empty;
 fqbin_to_msg_name(E) -> error({gpb_error, {badmsg, E}}).
 
 
-msg_name_to_fqbin('LoginReq') -> <<"google.protobuf.LoginReq">>;
-msg_name_to_fqbin('LoginResp') -> <<"google.protobuf.LoginResp">>;
-msg_name_to_fqbin('UserInfo') -> <<"google.protobuf.UserInfo">>;
-msg_name_to_fqbin('Empty') -> <<"google.protobuf.Empty">>;
+msg_name_to_fqbin(login_req) -> <<"google.protobuf.login_req">>;
+msg_name_to_fqbin(login_resp) -> <<"google.protobuf.login_resp">>;
+msg_name_to_fqbin(user_info) -> <<"google.protobuf.user_info">>;
+msg_name_to_fqbin(empty) -> <<"google.protobuf.Empty">>;
 msg_name_to_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 
 
@@ -908,8 +908,8 @@ get_all_source_basenames() -> ["msg_user.proto", "empty.proto", "error_code.prot
 get_all_proto_names() -> ["msg_user", "empty", "error_code"].
 
 
-get_msg_containment("msg_user") -> ['LoginReq', 'LoginResp', 'UserInfo'];
-get_msg_containment("empty") -> ['Empty'];
+get_msg_containment("msg_user") -> [login_req, login_resp, user_info];
+get_msg_containment("empty") -> [empty];
 get_msg_containment("error_code") -> [];
 get_msg_containment(P) -> error({gpb_error, {badproto, P}}).
 
@@ -938,10 +938,10 @@ get_enum_containment("error_code") -> ['Code'];
 get_enum_containment(P) -> error({gpb_error, {badproto, P}}).
 
 
-get_proto_by_msg_name_as_fqbin(<<"google.protobuf.LoginResp">>) -> "msg_user";
-get_proto_by_msg_name_as_fqbin(<<"google.protobuf.LoginReq">>) -> "msg_user";
+get_proto_by_msg_name_as_fqbin(<<"google.protobuf.login_resp">>) -> "msg_user";
+get_proto_by_msg_name_as_fqbin(<<"google.protobuf.login_req">>) -> "msg_user";
 get_proto_by_msg_name_as_fqbin(<<"google.protobuf.Empty">>) -> "empty";
-get_proto_by_msg_name_as_fqbin(<<"google.protobuf.UserInfo">>) -> "msg_user";
+get_proto_by_msg_name_as_fqbin(<<"google.protobuf.user_info">>) -> "msg_user";
 get_proto_by_msg_name_as_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 
 

@@ -17,11 +17,11 @@
 -compile(inline).
 
 -spec handle_msg(ex_msg:cmd16(), ex_msg:request(), ex_msg:state()) -> ex_msg:resp_maps().
-handle_msg(?CMD_MSG_BASE_HEARTBEATREQ, _Binary, State) -> % empty msg
-    Maps = mod_base:heartbeat(#HeartbeatReq{}, State),
+handle_msg(?CMD_MSG_BASE_HEART_BEAT_REQ, _Binary, State) -> % empty msg
+    Maps = mod_base:heartbeat(#heart_beat_req{}, State),
     handle_resp_maps(Maps);
-handle_msg(?CMD_MSG_USER_LOGINREQ, Binary, State) ->
-    Msg = msg_user_pb:decode_msg(Binary, LoginReq),
+handle_msg(?CMD_MSG_USER_LOGIN_REQ, Binary, State) ->
+    Msg = msg_user_pb:decode_msg(Binary, login_req),
     Maps = mod_user:login(Msg, State),
     handle_resp_maps(Maps);
 handle_msg(Cmd, _Binary, _State) ->
@@ -46,11 +46,11 @@ handle_resp_maps(Maps) ->
 encode_req_msg(Msg) ->
     encode_req_msg(element(1, Msg), Msg).
 -spec encode_req_msg(atom(), ex_msg:msg()) -> binary().
-encode_req_msg(HeartbeatReq, _Msg) -> % empty msg
-    <<?CMD_MSG_BASE_HEARTBEATREQ:16>>;
-encode_req_msg(LoginReq, Msg) ->
-    ReqBinary = msg_user_pb:encode_msg(Msg, LoginReq),
-    <<?CMD_MSG_USER_LOGINREQ:16, ReqBinary/binary>>.
+encode_req_msg(heart_beat_req, _Msg) -> % empty msg
+    <<?CMD_MSG_BASE_HEART_BEAT_REQ:16>>;
+encode_req_msg(login_req, Msg) ->
+    ReqBinary = msg_user_pb:encode_msg(Msg, login_req),
+    <<?CMD_MSG_USER_LOGIN_REQ:16, ReqBinary/binary>>.
 
 
 %% just resp
@@ -58,25 +58,25 @@ encode_req_msg(LoginReq, Msg) ->
 encode_resp_msg(Msg) ->
     encode_resp_msg(element(1, Msg), Msg).
 -spec encode_resp_msg(atom(), ex_msg:msg()) -> binary().
-encode_resp_msg(HeartbeatResp, _Msg) -> % empty msg
-    <<?CMD_MSG_BASE_HEARTBEATRESP:16>>;
-encode_resp_msg(LoginResp, Msg) ->
-    ReqBinary = msg_user_pb:encode_msg(Msg, LoginResp),
-    <<?CMD_MSG_USER_LOGINRESP:16, ReqBinary/binary>>.
+encode_resp_msg(heart_beat_resp, _Msg) -> % empty msg
+    <<?CMD_MSG_BASE_HEART_BEAT_RESP:16>>;
+encode_resp_msg(login_resp, Msg) ->
+    ReqBinary = msg_user_pb:encode_msg(Msg, login_resp),
+    <<?CMD_MSG_USER_LOGIN_RESP:16, ReqBinary/binary>>.
 
 
 %% just req
 -spec decode_req_msg(binary()) -> ex_msg:msg().
-decode_req_msg(<<?CMD_MSG_BASE_HEARTBEATREQ:16, _Binary/binary>>) -> % empty msg
-    #HeartbeatReq{};
-decode_req_msg(<<?CMD_MSG_USER_LOGINREQ:16, Binary/binary>>) ->
-    msg_user_pb:decode_msg(Binary, LoginReq).
+decode_req_msg(<<?CMD_MSG_BASE_HEART_BEAT_REQ:16, _Binary/binary>>) -> % empty msg
+    #heart_beat_req{};
+decode_req_msg(<<?CMD_MSG_USER_LOGIN_REQ:16, Binary/binary>>) ->
+    msg_user_pb:decode_msg(Binary, login_req).
 
 
 %% just resp
 -spec decode_resp_msg(binary()) -> ex_msg:msg().
-decode_resp_msg(<<?CMD_MSG_BASE_HEARTBEATRESP:16, _Binary/binary>>) -> % empty msg
-    #HeartbeatResp{};
-decode_resp_msg(<<?CMD_MSG_USER_LOGINRESP:16, Binary/binary>>) ->
-    msg_user_pb:decode_msg(Binary, LoginResp).
+decode_resp_msg(<<?CMD_MSG_BASE_HEART_BEAT_RESP:16, _Binary/binary>>) -> % empty msg
+    #heart_beat_resp{};
+decode_resp_msg(<<?CMD_MSG_USER_LOGIN_RESP:16, Binary/binary>>) ->
+    msg_user_pb:decode_msg(Binary, login_resp).
 

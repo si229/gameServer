@@ -48,22 +48,22 @@
 -export([gpb_version_source/0]).
 
 -include("msg_base_pb.hrl").
--include("gpb.hrl").
+-include_lib("gpb/include/gpb.hrl").
 
 %% enumerated types
--type c_cmd() :: 'HeartbeatReq' | 'HeartbeatResp'.
+-type c_cmd() :: heart_beat_req | heart_beat_resp.
 -export_type([c_cmd/0]).
 
 %% message types
--type 'HeartbeatReq'() :: #'HeartbeatReq'{}.
+-type heart_beat_req() :: #heart_beat_req{}.
 
--type 'HeartbeatResp'() :: #'HeartbeatResp'{}.
+-type heart_beat_resp() :: #heart_beat_resp{}.
 
--type 'Empty'() :: #'Empty'{}.
+-type empty() :: #empty{}.
 
--export_type(['HeartbeatReq'/0, 'HeartbeatResp'/0, 'Empty'/0]).
--type '$msg_name'() :: 'HeartbeatReq' | 'HeartbeatResp' | 'Empty'.
--type '$msg'() :: 'HeartbeatReq'() | 'HeartbeatResp'() | 'Empty'().
+-export_type(['heart_beat_req'/0, 'heart_beat_resp'/0, 'empty'/0]).
+-type '$msg_name'() :: heart_beat_req | heart_beat_resp | empty.
+-type '$msg'() :: heart_beat_req() | heart_beat_resp() | empty().
 -export_type(['$msg_name'/0, '$msg'/0]).
 
 -if(?OTP_RELEASE >= 24).
@@ -87,17 +87,17 @@ encode_msg(Msg, MsgName, Opts) ->
     verify_msg(Msg, MsgName, Opts),
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'HeartbeatReq' -> encode_msg_HeartbeatReq(id(Msg, TrUserData), TrUserData);
-        'HeartbeatResp' -> encode_msg_HeartbeatResp(id(Msg, TrUserData), TrUserData);
-        'Empty' -> encode_msg_Empty(id(Msg, TrUserData), TrUserData)
+        heart_beat_req -> encode_msg_heart_beat_req(id(Msg, TrUserData), TrUserData);
+        heart_beat_resp -> encode_msg_heart_beat_resp(id(Msg, TrUserData), TrUserData);
+        empty -> encode_msg_empty(id(Msg, TrUserData), TrUserData)
     end.
 
 
-encode_msg_HeartbeatReq(_Msg, _TrUserData) -> <<>>.
+encode_msg_heart_beat_req(_Msg, _TrUserData) -> <<>>.
 
-encode_msg_HeartbeatResp(_Msg, _TrUserData) -> <<>>.
+encode_msg_heart_beat_resp(_Msg, _TrUserData) -> <<>>.
 
-encode_msg_Empty(_Msg, _TrUserData) -> <<>>.
+encode_msg_empty(_Msg, _TrUserData) -> <<>>.
 
 -compile({nowarn_unused_function,e_type_sint/3}).
 e_type_sint(Value, Bin, _TrUserData) when Value >= 0 -> e_varint(Value * 2, Bin);
@@ -221,113 +221,113 @@ decode_msg_1_catch(Bin, MsgName, TrUserData) ->
     end.
 -endif.
 
-decode_msg_2_doit('HeartbeatReq', Bin, TrUserData) -> id(decode_msg_HeartbeatReq(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('HeartbeatResp', Bin, TrUserData) -> id(decode_msg_HeartbeatResp(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('Empty', Bin, TrUserData) -> id(decode_msg_Empty(Bin, TrUserData), TrUserData).
+decode_msg_2_doit(heart_beat_req, Bin, TrUserData) -> id(decode_msg_heart_beat_req(Bin, TrUserData), TrUserData);
+decode_msg_2_doit(heart_beat_resp, Bin, TrUserData) -> id(decode_msg_heart_beat_resp(Bin, TrUserData), TrUserData);
+decode_msg_2_doit(empty, Bin, TrUserData) -> id(decode_msg_empty(Bin, TrUserData), TrUserData).
 
 
 
-decode_msg_HeartbeatReq(Bin, TrUserData) -> dfp_read_field_def_HeartbeatReq(Bin, 0, 0, 0, TrUserData).
+decode_msg_heart_beat_req(Bin, TrUserData) -> dfp_read_field_def_heart_beat_req(Bin, 0, 0, 0, TrUserData).
 
-dfp_read_field_def_HeartbeatReq(<<>>, 0, 0, _, _) -> #'HeartbeatReq'{};
-dfp_read_field_def_HeartbeatReq(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_HeartbeatReq(Other, Z1, Z2, F, TrUserData).
+dfp_read_field_def_heart_beat_req(<<>>, 0, 0, _, _) -> #heart_beat_req{};
+dfp_read_field_def_heart_beat_req(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_heart_beat_req(Other, Z1, Z2, F, TrUserData).
 
-dg_read_field_def_HeartbeatReq(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_HeartbeatReq(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-dg_read_field_def_HeartbeatReq(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
+dg_read_field_def_heart_beat_req(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_heart_beat_req(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+dg_read_field_def_heart_beat_req(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
     Key = X bsl N + Acc,
     case Key band 7 of
-        0 -> skip_varint_HeartbeatReq(Rest, 0, 0, Key bsr 3, TrUserData);
-        1 -> skip_64_HeartbeatReq(Rest, 0, 0, Key bsr 3, TrUserData);
-        2 -> skip_length_delimited_HeartbeatReq(Rest, 0, 0, Key bsr 3, TrUserData);
-        3 -> skip_group_HeartbeatReq(Rest, 0, 0, Key bsr 3, TrUserData);
-        5 -> skip_32_HeartbeatReq(Rest, 0, 0, Key bsr 3, TrUserData)
+        0 -> skip_varint_heart_beat_req(Rest, 0, 0, Key bsr 3, TrUserData);
+        1 -> skip_64_heart_beat_req(Rest, 0, 0, Key bsr 3, TrUserData);
+        2 -> skip_length_delimited_heart_beat_req(Rest, 0, 0, Key bsr 3, TrUserData);
+        3 -> skip_group_heart_beat_req(Rest, 0, 0, Key bsr 3, TrUserData);
+        5 -> skip_32_heart_beat_req(Rest, 0, 0, Key bsr 3, TrUserData)
     end;
-dg_read_field_def_HeartbeatReq(<<>>, 0, 0, _, _) -> #'HeartbeatReq'{}.
+dg_read_field_def_heart_beat_req(<<>>, 0, 0, _, _) -> #heart_beat_req{}.
 
-skip_varint_HeartbeatReq(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_HeartbeatReq(Rest, Z1, Z2, F, TrUserData);
-skip_varint_HeartbeatReq(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatReq(Rest, Z1, Z2, F, TrUserData).
+skip_varint_heart_beat_req(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_heart_beat_req(Rest, Z1, Z2, F, TrUserData);
+skip_varint_heart_beat_req(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_req(Rest, Z1, Z2, F, TrUserData).
 
-skip_length_delimited_HeartbeatReq(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_HeartbeatReq(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-skip_length_delimited_HeartbeatReq(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
+skip_length_delimited_heart_beat_req(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_heart_beat_req(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+skip_length_delimited_heart_beat_req(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_HeartbeatReq(Rest2, 0, 0, F, TrUserData).
+    dfp_read_field_def_heart_beat_req(Rest2, 0, 0, F, TrUserData).
 
-skip_group_HeartbeatReq(Bin, _, Z2, FNum, TrUserData) ->
+skip_group_heart_beat_req(Bin, _, Z2, FNum, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_HeartbeatReq(Rest, 0, Z2, FNum, TrUserData).
+    dfp_read_field_def_heart_beat_req(Rest, 0, Z2, FNum, TrUserData).
 
-skip_32_HeartbeatReq(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatReq(Rest, Z1, Z2, F, TrUserData).
+skip_32_heart_beat_req(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_req(Rest, Z1, Z2, F, TrUserData).
 
-skip_64_HeartbeatReq(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatReq(Rest, Z1, Z2, F, TrUserData).
+skip_64_heart_beat_req(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_req(Rest, Z1, Z2, F, TrUserData).
 
-decode_msg_HeartbeatResp(Bin, TrUserData) -> dfp_read_field_def_HeartbeatResp(Bin, 0, 0, 0, TrUserData).
+decode_msg_heart_beat_resp(Bin, TrUserData) -> dfp_read_field_def_heart_beat_resp(Bin, 0, 0, 0, TrUserData).
 
-dfp_read_field_def_HeartbeatResp(<<>>, 0, 0, _, _) -> #'HeartbeatResp'{};
-dfp_read_field_def_HeartbeatResp(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_HeartbeatResp(Other, Z1, Z2, F, TrUserData).
+dfp_read_field_def_heart_beat_resp(<<>>, 0, 0, _, _) -> #heart_beat_resp{};
+dfp_read_field_def_heart_beat_resp(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_heart_beat_resp(Other, Z1, Z2, F, TrUserData).
 
-dg_read_field_def_HeartbeatResp(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_HeartbeatResp(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-dg_read_field_def_HeartbeatResp(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
+dg_read_field_def_heart_beat_resp(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_heart_beat_resp(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+dg_read_field_def_heart_beat_resp(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
     Key = X bsl N + Acc,
     case Key band 7 of
-        0 -> skip_varint_HeartbeatResp(Rest, 0, 0, Key bsr 3, TrUserData);
-        1 -> skip_64_HeartbeatResp(Rest, 0, 0, Key bsr 3, TrUserData);
-        2 -> skip_length_delimited_HeartbeatResp(Rest, 0, 0, Key bsr 3, TrUserData);
-        3 -> skip_group_HeartbeatResp(Rest, 0, 0, Key bsr 3, TrUserData);
-        5 -> skip_32_HeartbeatResp(Rest, 0, 0, Key bsr 3, TrUserData)
+        0 -> skip_varint_heart_beat_resp(Rest, 0, 0, Key bsr 3, TrUserData);
+        1 -> skip_64_heart_beat_resp(Rest, 0, 0, Key bsr 3, TrUserData);
+        2 -> skip_length_delimited_heart_beat_resp(Rest, 0, 0, Key bsr 3, TrUserData);
+        3 -> skip_group_heart_beat_resp(Rest, 0, 0, Key bsr 3, TrUserData);
+        5 -> skip_32_heart_beat_resp(Rest, 0, 0, Key bsr 3, TrUserData)
     end;
-dg_read_field_def_HeartbeatResp(<<>>, 0, 0, _, _) -> #'HeartbeatResp'{}.
+dg_read_field_def_heart_beat_resp(<<>>, 0, 0, _, _) -> #heart_beat_resp{}.
 
-skip_varint_HeartbeatResp(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_HeartbeatResp(Rest, Z1, Z2, F, TrUserData);
-skip_varint_HeartbeatResp(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatResp(Rest, Z1, Z2, F, TrUserData).
+skip_varint_heart_beat_resp(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_heart_beat_resp(Rest, Z1, Z2, F, TrUserData);
+skip_varint_heart_beat_resp(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_resp(Rest, Z1, Z2, F, TrUserData).
 
-skip_length_delimited_HeartbeatResp(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_HeartbeatResp(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-skip_length_delimited_HeartbeatResp(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
+skip_length_delimited_heart_beat_resp(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_heart_beat_resp(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+skip_length_delimited_heart_beat_resp(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_HeartbeatResp(Rest2, 0, 0, F, TrUserData).
+    dfp_read_field_def_heart_beat_resp(Rest2, 0, 0, F, TrUserData).
 
-skip_group_HeartbeatResp(Bin, _, Z2, FNum, TrUserData) ->
+skip_group_heart_beat_resp(Bin, _, Z2, FNum, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_HeartbeatResp(Rest, 0, Z2, FNum, TrUserData).
+    dfp_read_field_def_heart_beat_resp(Rest, 0, Z2, FNum, TrUserData).
 
-skip_32_HeartbeatResp(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatResp(Rest, Z1, Z2, F, TrUserData).
+skip_32_heart_beat_resp(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_resp(Rest, Z1, Z2, F, TrUserData).
 
-skip_64_HeartbeatResp(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_HeartbeatResp(Rest, Z1, Z2, F, TrUserData).
+skip_64_heart_beat_resp(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_heart_beat_resp(Rest, Z1, Z2, F, TrUserData).
 
-decode_msg_Empty(Bin, TrUserData) -> dfp_read_field_def_Empty(Bin, 0, 0, 0, TrUserData).
+decode_msg_empty(Bin, TrUserData) -> dfp_read_field_def_empty(Bin, 0, 0, 0, TrUserData).
 
-dfp_read_field_def_Empty(<<>>, 0, 0, _, _) -> #'Empty'{};
-dfp_read_field_def_Empty(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_Empty(Other, Z1, Z2, F, TrUserData).
+dfp_read_field_def_empty(<<>>, 0, 0, _, _) -> #empty{};
+dfp_read_field_def_empty(Other, Z1, Z2, F, TrUserData) -> dg_read_field_def_empty(Other, Z1, Z2, F, TrUserData).
 
-dg_read_field_def_Empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_Empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-dg_read_field_def_Empty(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
+dg_read_field_def_empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 32 - 7 -> dg_read_field_def_empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+dg_read_field_def_empty(<<0:1, X:7, Rest/binary>>, N, Acc, _, TrUserData) ->
     Key = X bsl N + Acc,
     case Key band 7 of
-        0 -> skip_varint_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        1 -> skip_64_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        2 -> skip_length_delimited_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        3 -> skip_group_Empty(Rest, 0, 0, Key bsr 3, TrUserData);
-        5 -> skip_32_Empty(Rest, 0, 0, Key bsr 3, TrUserData)
+        0 -> skip_varint_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        1 -> skip_64_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        2 -> skip_length_delimited_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        3 -> skip_group_empty(Rest, 0, 0, Key bsr 3, TrUserData);
+        5 -> skip_32_empty(Rest, 0, 0, Key bsr 3, TrUserData)
     end;
-dg_read_field_def_Empty(<<>>, 0, 0, _, _) -> #'Empty'{}.
+dg_read_field_def_empty(<<>>, 0, 0, _, _) -> #empty{}.
 
-skip_varint_Empty(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_Empty(Rest, Z1, Z2, F, TrUserData);
-skip_varint_Empty(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_varint_empty(<<1:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> skip_varint_empty(Rest, Z1, Z2, F, TrUserData);
+skip_varint_empty(<<0:1, _:7, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
-skip_length_delimited_Empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_Empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
-skip_length_delimited_Empty(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
+skip_length_delimited_empty(<<1:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) when N < 57 -> skip_length_delimited_empty(Rest, N + 7, X bsl N + Acc, F, TrUserData);
+skip_length_delimited_empty(<<0:1, X:7, Rest/binary>>, N, Acc, F, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_Empty(Rest2, 0, 0, F, TrUserData).
+    dfp_read_field_def_empty(Rest2, 0, 0, F, TrUserData).
 
-skip_group_Empty(Bin, _, Z2, FNum, TrUserData) ->
+skip_group_empty(Bin, _, Z2, FNum, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_Empty(Rest, 0, Z2, FNum, TrUserData).
+    dfp_read_field_def_empty(Rest, 0, Z2, FNum, TrUserData).
 
-skip_32_Empty(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_32_empty(<<_:32, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
-skip_64_Empty(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_Empty(Rest, Z1, Z2, F, TrUserData).
+skip_64_empty(<<_:64, Rest/binary>>, Z1, Z2, F, TrUserData) -> dfp_read_field_def_empty(Rest, Z1, Z2, F, TrUserData).
 
 read_group(Bin, FieldNum) ->
     {NumBytes, EndTagLen} = read_gr_b(Bin, 0, 0, 0, 0, FieldNum),
@@ -395,19 +395,19 @@ merge_msgs(Prev, New, Opts) when element(1, Prev) =:= element(1, New), is_list(O
 merge_msgs(Prev, New, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'HeartbeatReq' -> merge_msg_HeartbeatReq(Prev, New, TrUserData);
-        'HeartbeatResp' -> merge_msg_HeartbeatResp(Prev, New, TrUserData);
-        'Empty' -> merge_msg_Empty(Prev, New, TrUserData)
+        heart_beat_req -> merge_msg_heart_beat_req(Prev, New, TrUserData);
+        heart_beat_resp -> merge_msg_heart_beat_resp(Prev, New, TrUserData);
+        empty -> merge_msg_empty(Prev, New, TrUserData)
     end.
 
--compile({nowarn_unused_function,merge_msg_HeartbeatReq/3}).
-merge_msg_HeartbeatReq(_Prev, New, _TrUserData) -> New.
+-compile({nowarn_unused_function,merge_msg_heart_beat_req/3}).
+merge_msg_heart_beat_req(_Prev, New, _TrUserData) -> New.
 
--compile({nowarn_unused_function,merge_msg_HeartbeatResp/3}).
-merge_msg_HeartbeatResp(_Prev, New, _TrUserData) -> New.
+-compile({nowarn_unused_function,merge_msg_heart_beat_resp/3}).
+merge_msg_heart_beat_resp(_Prev, New, _TrUserData) -> New.
 
--compile({nowarn_unused_function,merge_msg_Empty/3}).
-merge_msg_Empty(_Prev, New, _TrUserData) -> New.
+-compile({nowarn_unused_function,merge_msg_empty/3}).
+merge_msg_empty(_Prev, New, _TrUserData) -> New.
 
 
 verify_msg(Msg) when tuple_size(Msg) >= 1 -> verify_msg(Msg, element(1, Msg), []);
@@ -420,27 +420,27 @@ verify_msg(X, _Opts) -> mk_type_error(not_a_known_message, X, []).
 verify_msg(Msg, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-        'HeartbeatReq' -> v_msg_HeartbeatReq(Msg, [MsgName], TrUserData);
-        'HeartbeatResp' -> v_msg_HeartbeatResp(Msg, [MsgName], TrUserData);
-        'Empty' -> v_msg_Empty(Msg, [MsgName], TrUserData);
+        heart_beat_req -> v_msg_heart_beat_req(Msg, [MsgName], TrUserData);
+        heart_beat_resp -> v_msg_heart_beat_resp(Msg, [MsgName], TrUserData);
+        empty -> v_msg_empty(Msg, [MsgName], TrUserData);
         _ -> mk_type_error(not_a_known_message, Msg, [])
     end.
 
 
--compile({nowarn_unused_function,v_msg_HeartbeatReq/3}).
--dialyzer({nowarn_function,v_msg_HeartbeatReq/3}).
-v_msg_HeartbeatReq(#'HeartbeatReq'{}, _Path, _) -> ok;
-v_msg_HeartbeatReq(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'HeartbeatReq'}, X, Path).
+-compile({nowarn_unused_function,v_msg_heart_beat_req/3}).
+-dialyzer({nowarn_function,v_msg_heart_beat_req/3}).
+v_msg_heart_beat_req(#heart_beat_req{}, _Path, _) -> ok;
+v_msg_heart_beat_req(X, Path, _TrUserData) -> mk_type_error({expected_msg, heart_beat_req}, X, Path).
 
--compile({nowarn_unused_function,v_msg_HeartbeatResp/3}).
--dialyzer({nowarn_function,v_msg_HeartbeatResp/3}).
-v_msg_HeartbeatResp(#'HeartbeatResp'{}, _Path, _) -> ok;
-v_msg_HeartbeatResp(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'HeartbeatResp'}, X, Path).
+-compile({nowarn_unused_function,v_msg_heart_beat_resp/3}).
+-dialyzer({nowarn_function,v_msg_heart_beat_resp/3}).
+v_msg_heart_beat_resp(#heart_beat_resp{}, _Path, _) -> ok;
+v_msg_heart_beat_resp(X, Path, _TrUserData) -> mk_type_error({expected_msg, heart_beat_resp}, X, Path).
 
--compile({nowarn_unused_function,v_msg_Empty/3}).
--dialyzer({nowarn_function,v_msg_Empty/3}).
-v_msg_Empty(#'Empty'{}, _Path, _) -> ok;
-v_msg_Empty(X, Path, _TrUserData) -> mk_type_error({expected_msg, 'Empty'}, X, Path).
+-compile({nowarn_unused_function,v_msg_empty/3}).
+-dialyzer({nowarn_function,v_msg_empty/3}).
+v_msg_empty(#empty{}, _Path, _) -> ok;
+v_msg_empty(X, Path, _TrUserData) -> mk_type_error({expected_msg, empty}, X, Path).
 
 -compile({nowarn_unused_function,mk_type_error/3}).
 -spec mk_type_error(_, _, list()) -> no_return().
@@ -479,16 +479,16 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 'erlang_++'(A, B, _TrUserData) -> A ++ B.
 
 
-get_msg_defs() -> [{{enum, c_cmd}, [{'HeartbeatReq', 0}, {'HeartbeatResp', 1}]}, {{msg, 'HeartbeatReq'}, []}, {{msg, 'HeartbeatResp'}, []}, {{msg, 'Empty'}, []}].
+get_msg_defs() -> [{{enum, c_cmd}, [{heart_beat_req, 0}, {heart_beat_resp, 1}]}, {{msg, heart_beat_req}, []}, {{msg, heart_beat_resp}, []}, {{msg, empty}, []}].
 
 
-get_msg_names() -> ['HeartbeatReq', 'HeartbeatResp', 'Empty'].
+get_msg_names() -> [heart_beat_req, heart_beat_resp, empty].
 
 
 get_group_names() -> [].
 
 
-get_msg_or_group_names() -> ['HeartbeatReq', 'HeartbeatResp', 'Empty'].
+get_msg_or_group_names() -> [heart_beat_req, heart_beat_resp, empty].
 
 
 get_enum_names() -> [c_cmd].
@@ -508,13 +508,13 @@ fetch_enum_def(EnumName) ->
     end.
 
 
-find_msg_def('HeartbeatReq') -> [];
-find_msg_def('HeartbeatResp') -> [];
-find_msg_def('Empty') -> [];
+find_msg_def(heart_beat_req) -> [];
+find_msg_def(heart_beat_resp) -> [];
+find_msg_def(empty) -> [];
 find_msg_def(_) -> error.
 
 
-find_enum_def(c_cmd) -> [{'HeartbeatReq', 0}, {'HeartbeatResp', 1}];
+find_enum_def(c_cmd) -> [{heart_beat_req, 0}, {heart_beat_resp, 1}];
 find_enum_def(_) -> error.
 
 
@@ -524,18 +524,18 @@ enum_symbol_by_value(c_cmd, Value) -> enum_symbol_by_value_c_cmd(Value).
 enum_value_by_symbol(c_cmd, Sym) -> enum_value_by_symbol_c_cmd(Sym).
 
 
-enum_symbol_by_value_c_cmd(0) -> 'HeartbeatReq';
-enum_symbol_by_value_c_cmd(1) -> 'HeartbeatResp'.
+enum_symbol_by_value_c_cmd(0) -> heart_beat_req;
+enum_symbol_by_value_c_cmd(1) -> heart_beat_resp.
 
 
-enum_value_by_symbol_c_cmd('HeartbeatReq') -> 0;
-enum_value_by_symbol_c_cmd('HeartbeatResp') -> 1.
+enum_value_by_symbol_c_cmd(heart_beat_req) -> 0;
+enum_value_by_symbol_c_cmd(heart_beat_resp) -> 1.
 
 
 get_service_names() -> [msg_base_service].
 
 
-get_service_def(msg_base_service) -> {{service, msg_base_service}, [#rpc{name = heartbeat, input = 'HeartbeatReq', output = 'HeartbeatResp', input_stream = false, output_stream = false, opts = []}]};
+get_service_def(msg_base_service) -> {{service, msg_base_service}, [#rpc{name = heartbeat, input = heart_beat_req, output = heart_beat_resp, input_stream = false, output_stream = false, opts = []}]};
 get_service_def(_) -> error.
 
 
@@ -547,7 +547,7 @@ find_rpc_def(msg_base_service, RpcName) -> find_rpc_def_msg_base_service(RpcName
 find_rpc_def(_, _) -> error.
 
 
-find_rpc_def_msg_base_service(heartbeat) -> #rpc{name = heartbeat, input = 'HeartbeatReq', output = 'HeartbeatResp', input_stream = false, output_stream = false, opts = []};
+find_rpc_def_msg_base_service(heartbeat) -> #rpc{name = heartbeat, input = heart_beat_req, output = heart_beat_resp, input_stream = false, output_stream = false, opts = []};
 find_rpc_def_msg_base_service(_) -> error.
 
 
@@ -584,15 +584,15 @@ service_and_rpc_name_to_fqbins(msg_base_service, heartbeat) -> {<<"google.protob
 service_and_rpc_name_to_fqbins(S, R) -> error({gpb_error, {badservice_or_rpc, {S, R}}}).
 
 
-fqbin_to_msg_name(<<"google.protobuf.HeartbeatReq">>) -> 'HeartbeatReq';
-fqbin_to_msg_name(<<"google.protobuf.HeartbeatResp">>) -> 'HeartbeatResp';
-fqbin_to_msg_name(<<"google.protobuf.Empty">>) -> 'Empty';
+fqbin_to_msg_name(<<"google.protobuf.heart_beat_req">>) -> heart_beat_req;
+fqbin_to_msg_name(<<"google.protobuf.heart_beat_resp">>) -> heart_beat_resp;
+fqbin_to_msg_name(<<"google.protobuf.Empty">>) -> empty;
 fqbin_to_msg_name(E) -> error({gpb_error, {badmsg, E}}).
 
 
-msg_name_to_fqbin('HeartbeatReq') -> <<"google.protobuf.HeartbeatReq">>;
-msg_name_to_fqbin('HeartbeatResp') -> <<"google.protobuf.HeartbeatResp">>;
-msg_name_to_fqbin('Empty') -> <<"google.protobuf.Empty">>;
+msg_name_to_fqbin(heart_beat_req) -> <<"google.protobuf.heart_beat_req">>;
+msg_name_to_fqbin(heart_beat_resp) -> <<"google.protobuf.heart_beat_resp">>;
+msg_name_to_fqbin(empty) -> <<"google.protobuf.Empty">>;
 msg_name_to_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 
 
@@ -631,8 +631,8 @@ get_all_source_basenames() -> ["msg_base.proto", "empty.proto"].
 get_all_proto_names() -> ["msg_base", "empty"].
 
 
-get_msg_containment("msg_base") -> ['HeartbeatReq', 'HeartbeatResp'];
-get_msg_containment("empty") -> ['Empty'];
+get_msg_containment("msg_base") -> [heart_beat_req, heart_beat_resp];
+get_msg_containment("empty") -> [empty];
 get_msg_containment(P) -> error({gpb_error, {badproto, P}}).
 
 
@@ -656,8 +656,8 @@ get_enum_containment("empty") -> [];
 get_enum_containment(P) -> error({gpb_error, {badproto, P}}).
 
 
-get_proto_by_msg_name_as_fqbin(<<"google.protobuf.HeartbeatResp">>) -> "msg_base";
-get_proto_by_msg_name_as_fqbin(<<"google.protobuf.HeartbeatReq">>) -> "msg_base";
+get_proto_by_msg_name_as_fqbin(<<"google.protobuf.heart_beat_resp">>) -> "msg_base";
+get_proto_by_msg_name_as_fqbin(<<"google.protobuf.heart_beat_req">>) -> "msg_base";
 get_proto_by_msg_name_as_fqbin(<<"google.protobuf.Empty">>) -> "empty";
 get_proto_by_msg_name_as_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 

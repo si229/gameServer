@@ -8,32 +8,32 @@
 -define(msg_user_pb_gpb_version, "4.21.5").
 
 
--ifndef('LOGINREQ_PB_H').
--define('LOGINREQ_PB_H', true).
--record('LoginReq',
+-ifndef('LOGIN_REQ_PB_H').
+-define('LOGIN_REQ_PB_H', true).
+-record(login_req,
         {account = <<>>         :: unicode:chardata() | undefined, % = 1, optional
          password = <<>>        :: unicode:chardata() | undefined % = 2, optional
         }).
 -endif.
 
--ifndef('LOGINRESP_PB_H').
--define('LOGINRESP_PB_H', true).
--record('LoginResp',
+-ifndef('LOGIN_RESP_PB_H').
+-define('LOGIN_RESP_PB_H', true).
+-record(login_resp,
         {code = ok              :: ok | fail | integer() | undefined, % = 1, optional, enum Code
-         user_info = undefined  :: msg_user_pb:'UserInfo'() | undefined % = 2, optional
+         user_info = undefined  :: msg_user_pb:user_info() | undefined % = 2, optional
         }).
 -endif.
 
--ifndef('USERINFO_PB_H').
--define('USERINFO_PB_H', true).
--record('UserInfo',
+-ifndef('USER_INFO_PB_H').
+-define('USER_INFO_PB_H', true).
+-record(user_info,
         {chips = 0              :: non_neg_integer() | undefined % = 1, optional, 32 bits
         }).
 -endif.
 
 -ifndef('EMPTY_PB_H').
 -define('EMPTY_PB_H', true).
--record('Empty',
+-record(empty,
         {
         }).
 -endif.

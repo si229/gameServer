@@ -3,24 +3,24 @@ import "google/protobuf/empty.proto";
 import "error_code.proto";
 
 enum c_cmd{
-  LoginReq   = 0;
+  login_req   = 0;
   LoginResp  = 1;
 }
 
 service msg_user_service{
-  rpc login(LoginReq) returns (LoginResp);
+  rpc login(login_req) returns (login_resp);
 }
 
-message LoginReq{
+message login_req{
   string account = 1;
   string password = 2;
 }
-message LoginResp{
+message login_resp{
   Code code = 1;
-  UserInfo user_info = 2;
+  user_info user_info = 2;
 }
 
 
-message UserInfo{
+message user_info{
   uint32 chips = 1;
 }

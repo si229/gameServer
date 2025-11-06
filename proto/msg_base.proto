@@ -2,17 +2,17 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 
 enum c_cmd{
-    HeartbeatReq   = 0;
-    HeartbeatResp  = 1;
+    heart_beat_req   = 0;
+    heart_beat_resp  = 1;
 }
 
 service msg_base_service{
-    rpc heartbeat(HeartbeatReq) returns (HeartbeatResp);
+    rpc heartbeat(heart_beat_req) returns (heart_beat_resp);
 }
 
-message HeartbeatReq{
+message heart_beat_req{
 
 }
-message HeartbeatResp{
+message heart_beat_resp{
 
 }

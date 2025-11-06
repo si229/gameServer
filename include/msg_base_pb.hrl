@@ -8,23 +8,23 @@
 -define(msg_base_pb_gpb_version, "4.21.5").
 
 
--ifndef('HEARTBEATREQ_PB_H').
--define('HEARTBEATREQ_PB_H', true).
--record('HeartbeatReq',
+-ifndef('HEART_BEAT_REQ_PB_H').
+-define('HEART_BEAT_REQ_PB_H', true).
+-record(heart_beat_req,
         {
         }).
 -endif.
 
--ifndef('HEARTBEATRESP_PB_H').
--define('HEARTBEATRESP_PB_H', true).
--record('HeartbeatResp',
+-ifndef('HEART_BEAT_RESP_PB_H').
+-define('HEART_BEAT_RESP_PB_H', true).
+-record(heart_beat_resp,
         {
         }).
 -endif.
 
 -ifndef('EMPTY_PB_H').
 -define('EMPTY_PB_H', true).
--record('Empty',
+-record(empty,
         {
         }).
 -endif.
