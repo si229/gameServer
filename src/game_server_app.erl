@@ -12,6 +12,7 @@
 start(_StartType, _StartArgs) ->
     case game_server_sup:start_link() of
         {ok,_} = R->
+            game_net:init(),
             game_net:start(),
             R;
         R->

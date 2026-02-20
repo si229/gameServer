@@ -41,9 +41,9 @@ init([]) ->
             type=>supervisor
         },
         #{
-            id => game_net,
-            start => {game_net, start_link, []},
-            modules =>[game_net],
+            id => game_net_handler,
+            start => {game_net_handler, start_link, []},
+            modules =>[game_net_handler],
             restart=>permanent,
             shutdown=>5000,
             type=>worker

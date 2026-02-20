@@ -23,8 +23,8 @@ init(Req, Opts) ->
     {cowboy_websocket, Req, {IpBin, Opts}}.
 
 websocket_init({Ip, _}) ->
-    process_flag(trap_exit, true),
-    {ok, #game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}}.
+    State = game_net_handler:handler_init(#game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}),
+    {ok, State}.
 
 websocket_handle({binary, Binary}, State) ->
     MapMsg = jsx:decode(Binary, [return_maps]),
