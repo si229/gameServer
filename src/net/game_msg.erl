@@ -10,5 +10,5 @@
 %% API
 -export([dispatch_msg/2]).
 
-dispatch_msg(#{<<"msg_type">> => <<"login_req">>} = Msg, State) ->
+dispatch_msg(#{<<"msg_type">> := <<"login_req">>} = Msg, State) ->
     mod_user:login(Msg, State).

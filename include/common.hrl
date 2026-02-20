@@ -1,12 +1,12 @@
 
 
--define(INFO(Msg),lager:info(Msg)).
--define(INFO(Format,Msg),lager:info(Format,Msg)).
+-define(INFO(__MSG__),lager:info(__MSG__)).
+-define(INFO(__Format__,__MSG__),lager:info(__Format__,__MSG__)).
 
--define(WARNING(Msg),lager:warning(Msg)).
--define(WARNING(Format,Msg),lager:warning(Format,Msg)).
+-define(WARNING(__MSG__),lager:warning(__MSG__)).
+-define(WARNING(__Format__,__MSG__),lager:warning(__Format__,__MSG__)).
 
--define(ERROR(Msg),lager:error(Msg)).
--define(ERROR(Format,Msg),lager:error(Format,Msg)).
+-define(ERROR(__MSG__),lager:error(__MSG__)).
+-define(ERROR(__Format__,__MSG__),lager:error(__Format__,__MSG__)).
 
 -define(MILLI_TIMESTAMP,erlang:system_time(1000)).

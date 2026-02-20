@@ -8,7 +8,11 @@
        {ref,"aca0ad953417b29bab2c41eeb4c37c98606c848b"}},
   1},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.9">>},1},
- {<<"gpb">>,{pkg,<<"gpb">>,<<"4.21.5">>},0},
+ {<<"gproc">>,
+  {git,"https://github.com/uwiger/gproc.git",
+       {ref,"5485a1ae84ddcdab46cdeca94f675ac00e38287f"}},
+  0},
+ {<<"jsx">>,{pkg,<<"jsx">>,<<"2.11.0">>},0},
  {<<"lager">>,
   {git,"https://github.com/erlang-lager/lager.git",
        {ref,"c5447d2d85a0d446d41a79bffe0a6a66bd50c901"}},
@@ -20,8 +24,8 @@
 [
 {pkg_hash,[
  {<<"goldrush">>, <<"F06E5D5F1277DA5C413E84D5A2924174182FB108DABB39D5EC548B27424CD106">>},
- {<<"gpb">>, <<"2D374D1784DEC2EA5D0925F26C8AF6EC8CA563CBAF0259E258792E4E33047317">>}]},
+ {<<"jsx">>, <<"08154624050333919B4AC1B789667D5F4DB166DC50E190C4D778D1587F102EE0">>}]},
 {pkg_hash_ext,[
  {<<"goldrush">>, <<"99CB4128CFFCB3227581E5D4D803D5413FA643F4EB96523F77D9E6937D994CEB">>},
- {<<"gpb">>, <<"99F8FFD31E1336528EFB32DDD02C0A8AC3DC859EC20F8D20142575ED4613179E">>}]}
+ {<<"jsx">>, <<"EED26A0D04D217F9EECEFFFB89714452556CF90EB38F290A27A4D45B9988F8C0">>}]}
 ].
