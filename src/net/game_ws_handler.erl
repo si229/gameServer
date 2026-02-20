@@ -27,7 +27,8 @@ websocket_init({Ip, _}) ->
     {ok, #game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}}.
 
 websocket_handle({binary, Binary}, State) ->
-    case catch game_msg:dispatch_msg(json:decode(Binary), State) of
+    MapMsg = jsx:decode(Binary,[return_maps]),
+    case catch game_msg:dispatch_msg(MapMsg, State) of
         {ok, RespBinary, NewState} ->
             send_msg(RespBinary, NewState);
         {ok, NewState} -> {ok, NewState};
