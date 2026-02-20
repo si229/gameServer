@@ -34,8 +34,21 @@ init([]) ->
     ChildSpecs = [
         #{
             id => user_sup,
-            start => {user_sup, start_link, []}
+            start => {user_sup, start_link, []},
+            modules =>[user_sup],
+            restart=>permanent,
+            shutdown=>5000,
+            type=>supervisor
+        },
+        #{
+            id => game_net,
+            start => {game_net, start_link, []},
+            modules =>[game_net],
+            restart=>permanent,
+            shutdown=>5000,
+            type=>worker
         }
+
     ],
     {ok, {SupFlags, ChildSpecs}}.
 
