@@ -27,7 +27,7 @@ websocket_init({Ip, _}) ->
     {ok, #game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}}.
 
 websocket_handle({binary, Binary}, State) ->
-    case game_msg:dispatch_msg(Binary, State) of
+    case catch game_msg:dispatch_msg(json:decode(Binary), State) of
         {ok, RespBinary, NewState} ->
             send_msg(RespBinary, NewState);
         {ok, NewState} -> {ok, NewState};
@@ -36,7 +36,10 @@ websocket_handle({binary, Binary}, State) ->
             send_stop_msg(RespBinary, NewState);
         {stop, Reason, NewState} ->
             ?WARNING("-- ~p", [Reason]),
-            {stop, NewState}
+            {stop, NewState};
+        R ->
+            ?WARNING("-- ~p", [R]),
+            {ok, State}
     end;
 websocket_handle({text, _Binary}, State) ->
     {reply, {text, <<"notsupport">>}, State};
