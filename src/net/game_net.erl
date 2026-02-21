@@ -19,7 +19,7 @@ start() ->
 
 start_ws(#{socket_opts := SocketOptions, type := Type} = Acc) ->
     TransOpts0 = Acc#{socket_opts => SocketOptions},
-    Path = "/",
+    Path = "/ws",
     Paths = path(Path),
     Result = case Type of
                  ws ->

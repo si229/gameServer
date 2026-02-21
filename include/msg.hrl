@@ -23,6 +23,15 @@
 -define(player, 7).
 
 
+-record(heartbeat_req,{
+    id
+}).
+
+-record(heartbeat_resp,{
+    id,
+    time
+}).
+
 -record(login_req, {
     account,
     password

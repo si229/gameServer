@@ -17,6 +17,7 @@
 
 -export([websocket_handle/2, websocket_init/1, websocket_info/2]).
 
+-define(NOT_LOGIN_MSG_ID, [<<"heartbeat_req">>, <<"login_req">>]).
 
 init(Req, Opts) ->
     IpBin = get_ip([<<"cdn-src-ip">>, <<"x-forwarded-for">>], Req),
@@ -24,30 +25,39 @@ init(Req, Opts) ->
 
 websocket_init({Ip, _}) ->
     State = game_net_handler:handler_init(#game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}),
+    ?WARNING("--~p", [State]),
     {ok, State}.
 
-websocket_handle({binary, Binary}, State) ->
+websocket_handle({binary, Binary}, #game_net_state{pid = Pid} = State) ->
     MapMsg = jsx:decode(Binary, [return_maps]),
-    case catch game_msg:dispatch_msg(MapMsg, State) of
-        {ok, RespBinary, NewState} ->
-            send_msg(RespBinary, NewState);
-        {ok, NewState} -> {ok, NewState};
-        {stop, Reason, RespBinary, NewState} ->
-            ?WARNING("-- ~p", [Reason]),
-            send_stop_msg(RespBinary, NewState);
-        {stop, Reason, NewState} ->
-            ?WARNING("-- ~p", [Reason]),
-            {stop, NewState};
-        R ->
-            ?WARNING("-- ~p", [R]),
+    MsgId = maps:get(<<"msg_id">>, MapMsg),
+    case lists:member(MsgId, ?NOT_LOGIN_MSG_ID) of
+        true ->
+            case catch game_msg:handle_not_login_msg(MapMsg, State) of
+                {ok, RespBinary, NewState} ->
+                    send_msg(RespBinary, NewState);
+                {ok, NewState} -> {ok, NewState};
+                {stop, Reason, RespBinary, NewState} ->
+                    ?WARNING("-- ~p", [Reason]),
+                    send_stop_msg(RespBinary, NewState);
+                {stop, Reason, NewState} ->
+                    ?WARNING("-- ~p", [Reason]),
+                    {stop, NewState};
+                R ->
+                    ?WARNING("-- ~p", [R]),
+                    {ok, State}
+            end;
+        false ->
+            Pid ! {msg, MapMsg},
             {ok, State}
     end;
+
 websocket_handle({text, _Binary}, State) ->
     {reply, {text, <<"notsupport">>}, State};
 websocket_handle({ping, Binary}, State) ->
     {reply, {pong, Binary}, State};
 websocket_handle(Data, State) ->
-    ?WARNING("-- unknown ~p", [Data]),
+    ?WARNING("-- unknown ~p", [{Data, State}]),
     {ok, State}.
 
 
@@ -69,7 +79,7 @@ websocket_info({stop, BinaryList}, State) ->
 websocket_info(stop, State) ->
     {stop, State};
 websocket_info(Msg, State) ->
-    ?WARNING("-- unknown ~p", [Msg]),
+    ?WARNING("-- unknown ~p", [{Msg, State}]),
     {stop, State}.
 
 get_ip([HeaderName | Headers], Req) ->
