@@ -47,6 +47,9 @@ handle_cast(_Request, State = #state{}) ->
 
 handle_info({msg, _Msg}, State = #state{}) ->
     {noreply, State};
+handle_info({settle, Msg, Profit}, State = #state{ws_pid = WsPid, chips = Chips}) ->
+    WsPid ! {send, Msg},
+    {noreply, State#state{chips = Profit + Chips}};
 handle_info({send, Msg}, State = #state{ws_pid = WsPid}) ->
     WsPid ! {send, Msg},
     {noreply, State};

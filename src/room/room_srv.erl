@@ -12,7 +12,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
     code_change/3]).
 
--export([pid/1]).
+-export([pid/1, enter/4]).
 
 -define(SERVER, ?MODULE).
 -include("room.hrl").
@@ -32,6 +32,10 @@
 pid(Id) ->
     gproc:lookup_local_name(?ROOM_PID(Id)).
 
+enter(Account, Type, Chips, Id) ->
+    Role = #room_role{account = Account, pid = self(), type = Type, chips = Chips},
+    gen_server:call(pid(Id), {enter, Role}).
+
 %%%===================================================================
 %%% Spawning and gen_server implementation
 %%%===================================================================
@@ -47,6 +51,15 @@ init([Id, Type]) ->
             {stop, normal}
     end.
 
+handle_call({enter, #room_role{account = Account, pid = Pid} = R}, _From
+    , State = #state{type = ?GUEST, guest_role_list = GuestRoleList}) ->
+    NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
+                           {value, #room_role{} = Role, LGuestRoleList} ->
+                               [Role#room_role{pid = Pid} | LGuestRoleList];
+                           _ ->
+                               [R | GuestRoleList]
+                       end,
+    {reply, ok, State#state{guest_role_list = NewGuestRoleList}};
 handle_call(_Request, _From, State = #state{}) ->
     {reply, ok, State}.
 
@@ -77,6 +90,7 @@ handle_loop(#state{phase_state = {Phase, CutOffTime}} = State) ->
     Now = ?MILLI_TIMESTAMP,
     if CutOffTime =< Now ->
         {NewPhase, NewCutOffTime} = next_state(Phase),
+        ?INFO("# ~p",[Phase]),
         handle_state(NewPhase, NewCutOffTime, State);
         true ->
             State
@@ -129,7 +143,7 @@ handle_state(?betting, CutOffTime, #state{} = State) ->
 handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     player_cards = PlayerCards, banker_cards = BankerCards
     , guest_role_list = GuestRoleList,
-    normal_role_list = NormalRoleList
+    normal_role_list = NormalRoleList, type = Type
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Payout = game_baccarat:payout_calculation(PlayerCards, BankerCards),
@@ -143,7 +157,11 @@ handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, chips = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
-        Pid ! {send, Msg},
+        if Type == ?NORMAL ->
+            Pid ! {settle, Msg, Profit};
+            true ->
+                Pid ! {send, Msg}
+        end,
         Role#room_role{chips = Chips + Profit}
                                   end, NormalRoleList),
 

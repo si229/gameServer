@@ -2,25 +2,29 @@
 -include("card.hrl").
 -include("common.hrl").
 -include("msg.hrl").
+-include("room.hrl").
 -define(SHOE_SIZE, 8). %% 1 shoe 8副牌
 -define(SHOE_MIN_NUM, 52). %% 小于52要重新换牌
 
 
 -export([deal/1, try_reshuffle_the_shoe/1]).
--export([init/0]).
+-export([init_shoe/0, init/0]).
 
 -export([gen_hash/2, payout_calculation/2, settlement/2]).
 
-init() ->
+init_shoe() ->
     Deck = ?DECK,
     lists:foldl(fun(_, Acc) ->
         Deck ++ Acc
                 end, Deck, lists:seq(2, ?SHOE_SIZE)).
+init() ->
+    supervisor:start_child(room_sup, [?GUEST]),
+    supervisor:start_child(room_sup, [?NORMAL]).
 
 try_reshuffle_the_shoe(Deck) ->
     case length(Deck) =< ?SHOE_MIN_NUM of
         true ->
-            {true, init()};
+            {true, init_shoe()};
         false ->
             false
     end.

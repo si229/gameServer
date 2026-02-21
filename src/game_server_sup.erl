@@ -41,6 +41,14 @@ init([]) ->
             type=>supervisor
         },
         #{
+            id => room_sup,
+            start => {room_sup, start_link, []},
+            modules =>[room_sup],
+            restart=>permanent,
+            shutdown=>5000,
+            type=>supervisor
+        },
+        #{
             id => game_net_handler,
             start => {game_net_handler, start_link, []},
             modules =>[game_net_handler],
