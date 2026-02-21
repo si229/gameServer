@@ -73,9 +73,14 @@ code_change(_OldVsn, State = #state{}, _Extra) ->
 handle_loop(#state{phase_state = undefined} = State) ->
     {Phase, CutOffTime} = hd(phase_info()),
     handle_state(Phase, CutOffTime, State);
-handle_loop(#state{phase_state = undefined} = State) ->
-    {Phase, CutOffTime} = hd(phase_info()),
-    handle_state(Phase, CutOffTime, State).
+handle_loop(#state{phase_state = {Phase, CutOffTime}} = State) ->
+    Now = ?MILLI_TIMESTAMP,
+    if CutOffTime =< Now ->
+        {NewPhase, NewCutOffTime} = next_state(Phase),
+        handle_state(NewPhase, NewCutOffTime, State);
+        true ->
+            State
+    end.
 
 handle_state(?preparation, CutOffTime, #state{deck = Deck} = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
@@ -126,14 +131,28 @@ handle_state(?betting, CutOffTime, #state{} = State) ->
     broadcast(Msg, State),
     State#state{phase_state = {?betting, DTime}};
 
-handle_state(?settlement, CutOffTime, #state{deal_info =DealInfo} = State) ->
+handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
+    player_cards = PlayerCards, banker_cards = BankerCards
+    , guest_role_list = GuestRoleList,
+    normal_role_list = NormalRoleList
+} = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    Payout = game_baccarat:payout_calculation(PlayerCards, BankerCards),
+    NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, chips = Chips, pid = Pid} = Role) ->
+        Profit = game_baccarat:settlement(BetInfo, Payout),
+        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
+        Pid ! {send, Msg},
+        Role#room_role{chips = Chips + Profit}
+                                 end, GuestRoleList),
 
+    NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, chips = Chips, pid = Pid} = Role) ->
+        Profit = game_baccarat:settlement(BetInfo, Payout),
+        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
+        Pid ! {send, Msg},
+        Role#room_role{chips = Chips + Profit}
+                                  end, NormalRoleList),
 
-
-    Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Result),
-    broadcast(Msg, State),
-    State#state{phase_state = {?settlement, DTime}}.
+    State#state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
 
 
 phase_info() ->
