@@ -125,11 +125,6 @@ handle_state(?betting, CutOffTime, #state{} = State) ->
     broadcast(Msg, State),
     State#state{phase_state = {?betting, DTime}};
 
-handle_state(?betting, CutOffTime, #state{} = State) ->
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Msg = game_proto_util:phase_change_push(?betting, DTime, false),
-    broadcast(Msg, State),
-    State#state{phase_state = {?betting, DTime}};
 
 handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     player_cards = PlayerCards, banker_cards = BankerCards

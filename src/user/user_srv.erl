@@ -18,7 +18,7 @@
 
 -define(USER_PID(ID), {user_pid, ID}).
 
--record(state, {account, ws_pid}).
+-record(state, {account, ws_pid, chips = 10000}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
