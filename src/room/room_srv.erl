@@ -20,7 +20,11 @@
 -include("common.hrl").
 -define(ROOM_PID(ID), {room_pid, ID}).
 
--record(state, {id, type, guest_role_list = [], normal_role_list = [], loop_timer_ref, phase_state}).
+-record(state, {id, type, guest_role_list = []
+    , normal_role_list = [], loop_timer_ref, phase_state
+    , deck = [], player_cards, banker_cards, hash_value
+    , deal_info
+}).
 
 -define(START_TIMER(), erlang:start_timer(500, self(), loop_timer)).
 
@@ -66,24 +70,70 @@ code_change(_OldVsn, State = #state{}, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_loop(#state{ phase_state = undefined} = State) ->
+handle_loop(#state{phase_state = undefined} = State) ->
     {Phase, CutOffTime} = hd(phase_info()),
     handle_state(Phase, CutOffTime, State);
-handle_loop(#state{ phase_state = undefined} = State) ->
+handle_loop(#state{phase_state = undefined} = State) ->
     {Phase, CutOffTime} = hd(phase_info()),
     handle_state(Phase, CutOffTime, State).
 
-handle_state(?preparation, CutOffTime, #state{} = State) ->
-    Msg = game_proto_util:phase_change_push(?preparation,CutOffTime,none,none),
-    broadcast(Msg,State),
-    State#state{phase_state = {?preparation,CutOffTime+?MILLI_TIMESTAMP}};
+handle_state(?preparation, CutOffTime, #state{deck = Deck} = State) ->
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    case game_baccarat:try_reshuffle_the_shoe(Deck) of
+        {true, NewDeck} ->
+            Msg = game_proto_util:phase_change_push(?preparation, DTime, true),
+            broadcast(Msg, State),
+            State#state{phase_state = {?preparation, DTime}, deck = NewDeck};
+        _ ->
+            Msg = game_proto_util:phase_change_push(?preparation, CutOffTime, false),
+            broadcast(Msg, State),
+            State#state{phase_state = {?preparation, DTime}}
+    end;
 
-handle_state(?dealing, CutOffTime, #state{} = State) ->
 
-    Msg = game_proto_util:phase_change_push(?dealing,CutOffTime,none,none),
-    broadcast(Msg,State),
-    State#state{phase_state = {?preparation,CutOffTime+?MILLI_TIMESTAMP}}.
+handle_state(?dealing, CutOffTime, #state{deck = Deck, type = ?GUEST} = State) ->
+    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
+    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
+    DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
+        , random_str => RandomStr, card_str => CardStr},
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    Msg = game_proto_util:phase_change_push(?dealing, DTime, false, DealInfo, none),
+    broadcast(Msg, State),
+    State#state{phase_state = {?dealing, DTime}, deck = NewDeck, deal_info = DealInfo
+        , player_cards = PlayerCards, banker_cards = BankerCards};
 
+handle_state(?dealing, CutOffTime, #state{deck = Deck} = State) ->
+    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
+    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
+    DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
+        , random_str => RandomStr, card_str => CardStr},
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    Msg = game_proto_util:phase_change_push(?dealing, DTime, false, #{hash_value => HashValue}, none),
+    broadcast(Msg, State),
+    State#state{phase_state = {?dealing, DTime}, deck = NewDeck, deal_info = DealInfo
+        , player_cards = PlayerCards, banker_cards = BankerCards};
+
+
+handle_state(?betting, CutOffTime, #state{} = State) ->
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    Msg = game_proto_util:phase_change_push(?betting, DTime, false),
+    broadcast(Msg, State),
+    State#state{phase_state = {?betting, DTime}};
+
+handle_state(?betting, CutOffTime, #state{} = State) ->
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    Msg = game_proto_util:phase_change_push(?betting, DTime, false),
+    broadcast(Msg, State),
+    State#state{phase_state = {?betting, DTime}};
+
+handle_state(?settlement, CutOffTime, #state{deal_info =DealInfo} = State) ->
+    DTime = CutOffTime + ?MILLI_TIMESTAMP,
+
+
+
+    Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Result),
+    broadcast(Msg, State),
+    State#state{phase_state = {?settlement, DTime}}.
 
 
 phase_info() ->

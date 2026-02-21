@@ -16,18 +16,20 @@
 -define(lucky_7, 0).
 -define(super_lucky_7, 1).
 -define(lucky_6, 2).
--define(super_lucky_6, 3).
--define(banker_pair, 4).
--define(player_pair, 5).
--define(banker, 6).
--define(player, 7).
+-define(lucky_6_2, 3).
+-define(lucky_6_3, 4).
+-define(banker_pair, 5).
+-define(player_pair, 6).
+-define(banker, 7).
+-define(player, 8).
+-define(tie, 9).
 
 
--record(heartbeat_req,{
+-record(heartbeat_req, {
     id
 }).
 
--record(heartbeat_resp,{
+-record(heartbeat_resp, {
     id,
     time
 }).
@@ -44,7 +46,7 @@
 }).
 
 
--record(reconnect_info,{
+-record(reconnect_info, {
     table_id,
     phase_info,
     bet_info
@@ -56,7 +58,8 @@
 {
     phase,
     cut_off_time,
-    hash_value,%% 发牌阶段推送
+    reset_the_road,
+    deal_info,
     result     %% 结算阶段推送
 }).
 
