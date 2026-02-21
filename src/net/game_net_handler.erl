@@ -88,7 +88,7 @@ handler_terminate() -> ok.
 
 %% @doc 检查所有的handler的心跳
 loop_check_handler() ->
-    send_to_group(?HANDLER_GROUP, {check_tick, ?MILLI_TIMESTAMP}).
+    send_to_group(?HANDLER_GROUP, check_tick).
 
 %% @doc 打开检查开关
 start_check() ->

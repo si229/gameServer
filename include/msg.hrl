@@ -55,8 +55,7 @@
 -record(phase_change_push,
 {
     phase,
-    countdown,
-    can_banker = false, %% 准备阶段
+    cut_off_time,
     hash_value,%% 发牌阶段推送
     result     %% 结算阶段推送
 }).
