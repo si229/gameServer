@@ -25,7 +25,7 @@
 
 send_code(Email) ->
     Content = io_lib:format("Subject: Baccarat Verification Code \r\nFrom: Baccarat \r\nTo:
-      \r\n\r\n ~p", [gen_code()]),
+      \r\n\r\n Please use the verification code within 30 minutes. ~p", [gen_code()]),
     gen_smtp_client:send({"mic688769@gmail.com", [Email], iolist_to_binary(Content)},
         [{relay, "smtp.gmail.com"}, {username, "mic688769@gmail.com"}, {password, "cjmpxtjzhfzytgqx"}
             , {port, 587}
