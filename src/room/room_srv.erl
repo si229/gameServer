@@ -43,7 +43,7 @@ start_link(Id, Type) ->
     gen_server:start_link(?MODULE, [Id, Type], []).
 
 init([Id, Type]) ->
-    case catch gproc:add_local_name(?ROOM_PID(Id)) of
+    case catch gproc:add_local_name(?ROOM_PID({Id, Type})) of
         true ->
             erlang:process_flag(trap_exit, true),
             {ok, #state{id = Id, type = Type, loop_timer_ref = ?START_TIMER()}};

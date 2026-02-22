@@ -6,12 +6,15 @@
     {applications, [
         kernel,
         stdlib,
+        ssl,
         cowboy,
         lager,
         gproc,
-        jsx
+        jsx,
+        mn_climber,
+        mnesia
     ]},
-    {env, []},
+    {env, [{use_mn_climber, true}]},
     {modules, []},
     {licenses, ["Apache-2.0"]},
     {links, []}
