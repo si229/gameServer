@@ -28,7 +28,7 @@
     , deal_info
 }).
 
--define(START_TIMER(), erlang:start_timer(500, self(), loop_timer)).
+-define(LOOP_TIMER(), erlang:start_timer(500, self(), loop_timer)).
 
 
 pid(Id) ->
@@ -60,7 +60,7 @@ init([Type, GameType]) ->
     case catch gproc:add_local_name(?ROOM_PID({Type, GameType})) of
         true ->
             erlang:process_flag(trap_exit, true),
-            {ok, #state{type = Type, loop_timer_ref = ?START_TIMER(), game_type = GameType}};
+            {ok, #state{type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType}};
         _ ->
             {stop, normal}
     end.
@@ -133,7 +133,7 @@ handle_cast(_Request, State = #state{}) ->
 
 handle_info({timeout, Ref, loop_timer}, State = #state{loop_timer_ref = Ref}) ->
     NewState = handle_loop(State),
-    {noreply, NewState#state{loop_timer_ref = ?START_TIMER()}};
+    {noreply, NewState#state{loop_timer_ref = ?LOOP_TIMER()}};
 handle_info(_Info, State = #state{}) ->
     {noreply, State}.
 

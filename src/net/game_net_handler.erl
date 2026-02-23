@@ -21,7 +21,7 @@
 -ifndef(NET_HANDLER_TICK_TIME).
 -define(NET_HANDLER_TICK_TIME, 60 * 1000).
 -endif.
--define(START_TIMER, erlang:start_timer(?NET_HANDLER_TICK_TIME, self(), tick_check)).
+-define(LOOP_TIMER, erlang:start_timer(?NET_HANDLER_TICK_TIME, self(), tick_check)).
 -record(state, {timer_ref}).
 
 -define(HANDLER_MIN_HEAP_SIZE,65536*2).
@@ -118,13 +118,13 @@ change_msg_interval_cb(Pid, Fun) when is_function(Fun, 2) ->
 %%%===================================================================
 
 init([]) ->
-    {ok, #state{timer_ref = ?START_TIMER}}.
+    {ok, #state{timer_ref = ?LOOP_TIMER}}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
 handle_cast(start_check, #state{timer_ref = undefined} = State) -> % not start
-    {noreply, State#state{timer_ref = ?START_TIMER}};
+    {noreply, State#state{timer_ref = ?LOOP_TIMER}};
 handle_cast(start_check, State) -> % started
     {noreply, State};
 handle_cast(stop_check, #state{timer_ref = undefined} = State) -> % not start
@@ -137,7 +137,7 @@ handle_cast(_Request, State) ->
 
 handle_info({timeout, TimerRef, tick_check}, #state{timer_ref = TimerRef} = State) ->
     loop_check_handler(),
-    {noreply, State#state{timer_ref = ?START_TIMER}};
+    {noreply, State#state{timer_ref = ?LOOP_TIMER}};
 handle_info(_Info, State) ->
     {noreply, State}.
 
