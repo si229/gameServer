@@ -12,19 +12,19 @@
 -include("msg.hrl").
 
 %% API
--export([enter_room/2]).
+-export([enter_room/2,leave_room/2]).
 
 
 enter_room(#{<<"msg_id">> := <<"enter_room_req">>
     , <<"play_type">> := PlayType, <<"game_type">> := GameType},
-    #user_state{account = Account, play_type = PlayType, game_type = GameType, user = User} = User) ->
+    #user_state{account = Account, play_type = PlayType, game_type = GameType, user = User} = UserState) ->
     case room_srv:enter(Account, PlayType, GameType, User#user.bonus_credits, User#user.real_money) of
         ok ->
             Msg = game_proto_util:enter_room(?ok),
-            {ok, Msg, User};
+            {ok, Msg, UserState};
         _ ->
             Msg = game_proto_util:enter_room(?fail),
-            {ok, Msg, User}
+            {ok, Msg, UserState}
     end;
 
 enter_room(#{<<"msg_id">> := <<"enter_room_req">>
@@ -46,3 +46,13 @@ enter_room(#{<<"msg_id">> := <<"enter_room_req">>
             {ok, Msg, UserState}
     end.
 
+leave_room(#{<<"msg_id">> := <<"leave_room_req">>},
+    #user_state{account = Account, play_type = PlayType, game_type = GameType} = UserState) ->
+    case room_srv:leave(Account, PlayType, GameType) of
+        ok ->
+            Msg = game_proto_util:leave_room(?ok),
+            {ok, Msg, UserState#user_state{play_type = undefined, game_type = undefined}};
+        _->
+            Msg = game_proto_util:leave_room(?fail),
+            {ok, Msg, UserState}
+    end.

@@ -35,13 +35,12 @@
 -define(tie, 9).
 
 
-
 %%--- 登录方式
--define(login_with_guest,0).
--define(login_with_email_password,1).
--define(login_with_phone_password,2).
--define(login_with_email_code,3).
--define(login_with_phone_code,4).
+-define(login_with_guest, 0).
+-define(login_with_email_password, 1).
+-define(login_with_phone_password, 2).
+-define(login_with_email_code, 3).
+-define(login_with_phone_code, 4).
 
 -record(heartbeat_req, {
     id
@@ -67,32 +66,32 @@
     reconnect_info
 }).
 
--record(bind_email_req,{
+-record(bind_email_req, {
     email,
     code
 }).
 
--record(bind_email_resp,{
+-record(bind_email_resp, {
     code
 }).
 
--record(bind_phone_req,{
+-record(bind_phone_req, {
     num,
     code
 }).
 
--record(bind_phone_resp,{
+-record(bind_phone_resp, {
     code
 }).
 
 
--record(bind_password_req,{
+-record(bind_password_req, {
     phone,
     email,
     password
 }).
 
--record(bind_password_resp,{
+-record(bind_password_resp, {
     code
 }).
 
@@ -129,14 +128,21 @@
 }).
 
 
--record(enter_room_req,{
+-record(enter_room_req, {
     play_type,
     game_type
 }).
 
--record(enter_room_resp,{
+-record(enter_room_resp, {
     play_type,
     game_type,
     phase_info
 }).
 
+
+-record(leave_room_req, {
+}).
+
+-record(leave_room_resp, {
+    code
+}).

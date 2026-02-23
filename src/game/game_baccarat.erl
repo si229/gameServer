@@ -22,6 +22,8 @@ init_shoe() ->
 
 init() ->
     supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_LUCKY]),
+    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_CLASSIC]),
+    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_LUCKY]),
     supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_CLASSIC]).
 
 try_reshuffle_the_shoe(Deck) ->
