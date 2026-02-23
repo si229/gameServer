@@ -245,10 +245,10 @@ next_state(Phase, [{Phase, _}, Next | _]) -> Next;
 next_state(Phase, [_ | Next]) -> next_state(Phase, Next).
 
 
-broadcast(Msg, #state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
-    lists:foreach(fun(#room_role{pid = Pid}) ->
-        Pid ! {send, Msg}
-                  end, GuestRoleList),
+broadcast(Msg, #state{normal_role_list = NormalRoleList}) ->
+%%    lists:foreach(fun(#room_role{pid = Pid}) ->
+%%        Pid ! {send, Msg}
+%%                  end, GuestRoleList),
     lists:foreach(fun(#room_role{pid = Pid}) ->
         Pid ! {send, Msg}
                   end, NormalRoleList).
