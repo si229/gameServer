@@ -2,8 +2,8 @@
 -define(GAME_TYPE_CLASSIC, 2). %% 经典百家乐
 
 -record(room_role, {
-    account,
-    pid,
+    account
+    , pid
     , bonus_credits = 0
     , real_money = 0
     , bet_info

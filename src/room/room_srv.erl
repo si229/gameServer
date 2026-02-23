@@ -14,6 +14,8 @@
 
 -export([pid/1, enter/5]).
 
+-export([update_bonus_chips/4, update_real_chips/4]).
+
 -define(SERVER, ?MODULE).
 -include("room.hrl").
 -include("msg.hrl").
@@ -39,6 +41,14 @@ enter(Account, Type, GameType, BonusCredits, RealMoney) ->
         , real_money = RealMoney
     },
     gen_server:call(pid({Type, GameType}), {enter, Role}).
+
+update_real_chips(Account, Type, GameType, Chips) ->
+    Role = #room_role{account = Account, pid = self(), real_money = Chips},
+    gen_server:cast(pid({Type, GameType}), {update_real_chips, Role}).
+
+update_bonus_chips(Account, Type, GameType, Chips) ->
+    Role = #room_role{account = Account, pid = self(), bonus_credits = Chips},
+    gen_server:cast(pid({Type, GameType}), {update_bonus_chips, Role}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -99,6 +109,25 @@ handle_call({leave, Account}, _From
 handle_call(_Request, _From, State = #state{}) ->
     {reply, ok, State}.
 
+
+handle_cast({update_real_chips, #room_role{real_money = RealMoney, account = Account}}, State = #state{
+    normal_role_list = NormalRoleList}) ->
+    NewNormalRoleList = case lists:keytake(Account, #room_role.account, NormalRoleList) of
+                            {value, #room_role{} = Role, LNormalRoleList} ->
+                                [Role#room_role{real_money = RealMoney} | LNormalRoleList];
+                            _ ->
+                                NormalRoleList
+                        end,
+    {noreply, State#state{normal_role_list = NewNormalRoleList}};
+handle_cast({update_bonus_chips, #room_role{bonus_credits = BonusCredits, account = Account}}
+    , State = #state{guest_role_list = GuestRoleList}) ->
+    NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
+                           {value, #room_role{} = Role, LGuestRoleList} ->
+                               [Role#room_role{bonus_credits = BonusCredits} | LGuestRoleList];
+                           _ ->
+                               GuestRoleList
+                       end,
+    {noreply, State#state{guest_role_list = NewGuestRoleList}};
 handle_cast(_Request, State = #state{}) ->
     {noreply, State}.
 
