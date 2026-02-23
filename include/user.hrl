@@ -45,5 +45,5 @@
     account,
     type,
     real_money = 0,  %% 真实金额
-    bonus_credits %% 体验金
+    bonus_credits = 10000 %% 体验金
 }).

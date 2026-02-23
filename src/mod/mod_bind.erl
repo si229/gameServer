@@ -10,23 +10,26 @@
 -author("si").
 -include("user.hrl").
 -include("msg.hrl").
+-include("common.hrl").
 %% API
 -export([bind_email/2, bind_password/2]).
 
 
 bind_email(#{<<"msg_id">> := <<"bind_email_req">>
     , <<"email">> := Email, <<"code">> := Code},
-    #user_state{account = Account} = User) ->
+    #user_state{account = Account, user = User} = UserState) ->
     case mnesia:dirty_read(t_email, Email) of
         [#t_email{account = Account, code = Code}] ->
             mnesia:dirty_delete(t_email, Email),
             mnesia:dirty_write(#email{address = Email, account = Account}),
+            NewUser = User#user{type = ?NORMAL},
+            game_user:save(NewUser),
             game_user:update_email(Account, Email),
             Msg = game_proto_util:bind_email(?ok),
-            {ok, Msg, User};
+            {ok, Msg, UserState#user_state{user = NewUser}};
         _ ->
             Msg = game_proto_util:bind_email(?invalid_verification_code),
-            {ok, Msg, User}
+            {ok, Msg, UserState}
     end;
 bind_email(#{<<"msg_id">> := <<"bind_email_req">>
     , <<"email">> := Email},
@@ -46,29 +49,35 @@ bind_email(#{<<"msg_id">> := <<"bind_email_req">>
 
 bind_password(#{<<"msg_id">> := <<"bind_password_req">>
     , <<"phone">> := Phone, <<"email">> := Email, <<"password">> := Password},
-    #user_state{account = Account} = User) ->
+    #user_state{account = Account, user = User} = UserState) ->
     mnesia:dirty_write(#phone_password{num = Phone, password = Password, account = Account}),
     mnesia:dirty_write(#email_password{address = Email, password = Password, account = Account}),
 
+    NewUser = User#user{type = ?NORMAL},
     game_user:update_email(Account, Email),
     game_user:update_email(Account, Phone),
+    game_user:save(NewUser),
     Msg = game_proto_util:bind_password(?ok),
-    {ok, Msg, User};
+    {ok, Msg, UserState#user_state{user = NewUser}};
 
 bind_password(#{<<"msg_id">> := <<"bind_password_req">>
     , <<"phone">> := Phone, <<"password">> := Password},
-    #user_state{account = Account} = User) ->
+    #user_state{account = Account, user = User} = UserState) ->
     mnesia:dirty_write(#phone_password{num = Phone, password = Password, account = Account}),
     game_user:update_email(Account, Phone),
     Msg = game_proto_util:bind_password(?ok),
-    {ok, Msg, User};
+    NewUser = User#user{type = ?NORMAL},
+    game_user:save(NewUser),
+    {ok, Msg, UserState#user_state{user = User}};
 
 bind_password(#{<<"msg_id">> := <<"bind_password_req">>
     , <<"email">> := Email, <<"password">> := Password},
-    #user_state{account = Account} = User) ->
+    #user_state{account = Account, user = User} = UserState) ->
     mnesia:dirty_write(#email_password{address = Email, password = Password, account = Account}),
     Msg = game_proto_util:bind_password(?ok),
-    {ok, Msg, User};
+    NewUser = User#user{type = ?NORMAL},
+    game_user:save(NewUser),
+    {ok, Msg, UserState};
 
 bind_password(#{<<"msg_id">> := <<"bind_password_req">>},
     #user_state{} = User) ->

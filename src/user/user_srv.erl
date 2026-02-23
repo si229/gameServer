@@ -27,20 +27,20 @@
 %%% Spawning and gen_server implementation
 %%%===================================================================
 
-start_link(Account, WsPid) ->
-    gen_server:start_link(?MODULE, [Account, WsPid], []).
+start_link(User, WsPid) ->
+    gen_server:start_link(?MODULE, [User, WsPid], []).
 
 pid(Account) ->
     gproc:lookup_local_name(?USER_PID(Account)).
 
-init([Account, WsPid]) ->
+init([#user{account = Account} = User, WsPid]) ->
     case catch gproc:add_local_name(?USER_PID(Account)) of
         true ->
             erlang:process_flag(trap_exit, true),
             erlang:monitor(process, WsPid),
             {ok, #user_state{account = Account
                 , ws_pid = WsPid
-                , user = game_user:load(Account)
+                , user = User
                 , timer_ref = ?LOOP_TIMER()
             }};
         _ ->

@@ -10,7 +10,7 @@
 
 
 -export([deal/1, try_reshuffle_the_shoe/1]).
--export([init_shoe/0, init/0]).
+-export([init_shoe/0, init/0,get_point/1]).
 
 -export([gen_hash/2, payout_calculation/3, settlement/2]).
 

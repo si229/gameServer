@@ -40,8 +40,10 @@ update_phone(Account, Phone) ->
 load(Account) ->
     case mnesia:dirty_read(user, Account) of
         [#user{} = User] -> User;
-        _ -> #user{type = ?GUEST, account = Account, bonus_credits = 1000}
+        _ -> #user{type = ?GUEST, account = Account}
     end.
 
+save(#user{type = ?GUEST}) ->
+    skip;
 save(#user{} = User) ->
     mnesia:dirty_write(User).
