@@ -1,3 +1,6 @@
+
+-record(user_state, {account, ws_pid, user, timer_ref,play_type,game_type}).
+
 -record(email, {
     address,
     account

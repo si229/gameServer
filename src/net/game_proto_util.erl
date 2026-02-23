@@ -15,7 +15,8 @@
 -export([
     bind_email/1,
     bind_phone/1,
-    bind_password/1
+    bind_password/1,
+    enter_room/1
 ]).
 
 login_resp(Account, Chips, ReconnectInfo) ->
@@ -34,6 +35,9 @@ bind_phone(Code) ->
 
 bind_password(Code) ->
     jsx:encode(#{msg_id => bind_password_resp, code => Code}).
+
+enter_room(Code) ->
+    jsx:encode(#{msg_id => enter_room_resp, code => Code}).
 
 %% 阶段变更信息
 phase_change_push(Phase, CutOffTime, ResetTheRoad) ->

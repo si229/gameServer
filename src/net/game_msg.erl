@@ -24,7 +24,9 @@ handle_not_login_msg(#{<<"msg_id">> := <<"heartbeat_req">>, <<"id">> := Id}, Sta
 handle_not_login_msg(#{<<"msg_id">> := <<"login_req">>} = Msg, State) ->
     mod_user:login(Msg, State).
 
+handle_game_msg(#{<<"msg_id">> := <<"bind_email_req">>} = Msg, State) ->
+    mod_bind:bind_email(Msg, State);
+handle_game_msg(#{<<"msg_id">> := <<"bind_password_req">>} = Msg, State) ->
+    mod_bind:bind_password(Msg, State).
 
 
-handle_game_msg(#{<<"msg_id">> := <<"login_req">>} = Msg, State) ->
-    mod_user:login(Msg, State).

@@ -117,8 +117,8 @@
 %% 下注请求
 -record(betting_req,
 {
-    zone,
-    amount
+    amount,
+    zone
 }).
 %% 下注信息推送
 -record(bet_push,
@@ -128,4 +128,15 @@
     code
 }).
 
+
+-record(enter_room_req,{
+    play_type,
+    game_type
+}).
+
+-record(enter_room_resp,{
+    play_type,
+    game_type,
+    phase_info
+}).
 

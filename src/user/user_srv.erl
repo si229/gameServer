@@ -21,7 +21,7 @@
 
 -define(LOOP_TIMER(), erlang:start_timer(1000, self(), loop_timer)).
 -define(TIMEOUT_OFFLINE, 120 * 1000).
--record(state, {account, ws_pid, user, timer_ref}).
+
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -38,7 +38,7 @@ init([Account, WsPid]) ->
         true ->
             erlang:process_flag(trap_exit, true),
             erlang:monitor(process, WsPid),
-            {ok, #state{account = Account
+            {ok, #user_state{account = Account
                 , ws_pid = WsPid
                 , user = game_user:load(Account)
                 , timer_ref = ?LOOP_TIMER()
@@ -47,49 +47,49 @@ init([Account, WsPid]) ->
             {stop, normal}
     end.
 
-handle_call(_Request, _From, State = #state{}) ->
+handle_call(_Request, _From, State = #user_state{}) ->
     {reply, ok, State}.
 
-handle_cast(_Request, State = #state{}) ->
+handle_cast(_Request, State = #user_state{}) ->
     {noreply, State}.
 
-handle_info({reconnect, WsPid}, #state{} = State) ->
-    {noreply, State#state{ws_pid = WsPid}};
-handle_info({msg, Msg}, State = #state{ws_pid = WsPid}) ->
+handle_info({reconnect, WsPid}, #user_state{} = State) ->
+    {noreply, State#user_state{ws_pid = WsPid}};
+handle_info({msg, Msg}, State = #user_state{ws_pid = WsPid}) ->
     case game_msg:handle_game_msg(Msg, State) of
-        {ok, #state{} = NewState} ->
+        {ok, #user_state{} = NewState} ->
             {noreply, NewState};
-        {ok, Msg, #state{} = NewState} ->
+        {ok, Msg, #user_state{} = NewState} ->
             send_msg(WsPid, Msg),
             {noreply, NewState};
         _ ->
             {noreply, State}
     end;
-handle_info({settle, Msg, {?GUEST, Profit}}, State = #state{ws_pid = WsPid,
-    user = #user{type = ?GUEST, bonus_credits = BonusCredits} = User}) ->
+handle_info({settle, Msg, {?GUEST, Profit}}, State = #user_state{ws_pid = WsPid,
+    user = #user{bonus_credits = BonusCredits} = User}) ->
     send_msg(WsPid, Msg),
     NewUser = User#user{bonus_credits = BonusCredits + Profit},
-    {noreply, State#state{user = NewUser}};
-handle_info({settle, Msg, {?NORMAL, Profit}}, State = #state{ws_pid = WsPid
+    {noreply, State#user_state{user = NewUser}};
+handle_info({settle, Msg, {?NORMAL, Profit}}, State = #user_state{ws_pid = WsPid
     , user = #user{real_money = RealMoney} = User}) ->
     send_msg(WsPid, Msg),
     NewUser = User#user{real_money = RealMoney + Profit},
     game_user:save(NewUser),
-    {noreply, State#state{user = NewUser}};
-handle_info({send, Msg}, State = #state{ws_pid = WsPid}) ->
+    {noreply, State#user_state{user = NewUser}};
+handle_info({send, Msg}, State = #user_state{ws_pid = WsPid}) ->
     send_msg(WsPid, Msg),
     {noreply, State};
 
-handle_info({'DOWN', _Ref, process, WsPid, Reason}, State = #state{ws_pid = WsPid, account = Account}) ->
+handle_info({'DOWN', _Ref, process, WsPid, Reason}, State = #user_state{ws_pid = WsPid, account = Account}) ->
     ?WARNING("# offline  ~p", [{Account, Reason}]),
-    {noreply, State#state{ws_pid = erlang:system_time(1000)}};
+    {noreply, State#user_state{ws_pid = erlang:system_time(1000)}};
 
 
-handle_info({timeout, _, loop_timer}, State = #state{}) ->
+handle_info({timeout, _, loop_timer}, State = #user_state{}) ->
     case handle_loop(State) of
         stop ->
             {stop, normal, State};
-        #state{} = NewState ->
+        #user_state{} = NewState ->
             ?LOOP_TIMER(),
             {noreply, NewState};
         _ ->
@@ -97,19 +97,19 @@ handle_info({timeout, _, loop_timer}, State = #state{}) ->
             {noreply, State}
     end;
 
-handle_info(_Info, State = #state{}) ->
+handle_info(_Info, State = #user_state{}) ->
     {noreply, State}.
 
-terminate(_Reason, _State = #state{}) ->
+terminate(_Reason, _State = #user_state{}) ->
     ok.
 
-code_change(_OldVsn, State = #state{}, _Extra) ->
+code_change(_OldVsn, State = #user_state{}, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_loop(#state{ws_pid = T} = State) when is_integer(T) ->
+handle_loop(#user_state{ws_pid = T} = State) when is_integer(T) ->
     Now = erlang:system_time(1000),
     case T + ?TIMEOUT_OFFLINE >= Now of
         true ->

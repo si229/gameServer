@@ -12,7 +12,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
     code_change/3]).
 
--export([pid/1, enter/5]).
+-export([pid/1, enter/5, leave/3]).
 
 -export([update_bonus_chips/4, update_real_chips/4]).
 
@@ -34,13 +34,16 @@
 pid(Id) ->
     gproc:lookup_local_name(?ROOM_PID(Id)).
 
-enter(Account, Type, GameType, BonusCredits, RealMoney) ->
+enter(Account, PlayType, GameType, BonusCredits, RealMoney) ->
     Role = #room_role{account = Account
         , pid = self()
         , bonus_credits = BonusCredits
         , real_money = RealMoney
     },
-    gen_server:call(pid({Type, GameType}), {enter, Role}).
+    gen_server:call(pid({PlayType, GameType}), {enter, Role}).
+
+leave(Account, PlayType, GameType) ->
+    gen_server:call(pid({PlayType, GameType}), {leave, Account}).
 
 update_real_chips(Account, Type, GameType, Chips) ->
     Role = #room_role{account = Account, pid = self(), real_money = Chips},
@@ -209,7 +212,7 @@ handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Payout = game_baccarat:payout_calculation(GameType,PlayerCards, BankerCards),
+    Payout = game_baccarat:payout_calculation(GameType, PlayerCards, BankerCards),
 
     NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
