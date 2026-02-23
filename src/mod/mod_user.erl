@@ -9,13 +9,70 @@
 -module(mod_user).
 -include("game_net.hrl").
 -include("msg.hrl").
+-include("user.hrl").
 -include("common.hrl").
+-include("login.hrl").
 %% API
 -export([login/2]).
 
 
-login(#{<<"msg_id">> := <<"login_req">>, <<"account">> := Account, <<"password">> := Password}, #game_net_state{} = State) ->
-    ?INFO("# ~p", [{Account, Password}]),
+login(#{<<"msg_id">> := <<"login_req">>, <<"option">> := Option} = Msg, #game_net_state{} = State) ->
+    case check_login(Option, Msg) of
+        {ok, Account} ->
+            login_do(Account, State);
+        ok ->
+            {ok, State};
+        _ ->
+            Msg = game_proto_util:login_resp(?fail),
+            {ok, Msg, State}
+    end.
+
+check_login(?login_with_guest, _Msg) -> {ok, game_server_id:next_id()};
+check_login(?login_with_email_password, #{<<"email">> := Email, <<"password">> := Password}) ->
+    case mnesia:dirty_read(email_password, Email) of
+        [#email_password{account = Account, password = Password}] ->
+            {ok, Account};
+        _ ->
+            Msg = game_proto_util:login_resp(?invalid_password),
+            {error, Msg}
+    end;
+check_login(?login_with_phone_password, #{<<"phone">> := Phone, <<"password">> := Password}) ->
+    case mnesia:dirty_read(phone_password, Phone) of
+        [#phone_password{account = Account, password = Password}] ->
+            {ok, Account};
+        _ ->
+            Msg = game_proto_util:login_resp(?invalid_password),
+            {error, Msg}
+    end;
+
+check_login(?login_with_email_code, #{<<"email">> := Email, <<"code">> := Code}) ->
+    case mnesia:dirty_read(login_email, Email) of
+        [#login_email{code = Code, account = Account}] ->
+            mnesia:dirty_delete(login_email, Email),
+            {ok, Account};
+        _ ->
+            Msg = game_proto_util:login_resp(?invalid_verification_code),
+            {error, Msg}
+    end;
+
+check_login(?login_with_email_code, #{<<"email">> := Email}) ->
+    case mnesia:dirty_read(email, Email) of
+        [#email{account = Account}] ->
+            Code = game_mail:gen_code(),
+            case game_mail:send_code(Email, Code) of
+                {ok, _} ->
+                    mnesia:dirty_write(#login_email{account = Account, code = Code, email = Email});
+                _ ->
+                    skip
+            end,
+            ok;
+        _ ->
+            Msg = game_proto_util:login_resp(?invalid_email),
+            {error, Msg}
+    end.
+
+
+login_do(Account, State) ->
     case supervisor:start_child(user_sup, [Account, self()]) of
         {ok, Pid} ->
             Msg = game_proto_util:login_resp(Account, 1000, none),
@@ -24,4 +81,3 @@ login(#{<<"msg_id">> := <<"login_req">>, <<"account">> := Account, <<"password">
             ?WARNING("# ~p", [R]),
             {ok, State}
     end.
-

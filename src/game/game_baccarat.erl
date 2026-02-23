@@ -1,3 +1,5 @@
+%% 幸运百家乐
+
 -module(game_baccarat).
 -include("card.hrl").
 -include("common.hrl").

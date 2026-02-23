@@ -15,10 +15,11 @@
 -export([pid/1]).
 
 -define(SERVER, ?MODULE).
-
+-include("user.hrl").
+-include("common.hrl").
 -define(USER_PID(ID), {user_pid, ID}).
 
--record(state, {account, ws_pid, chips = 10000}).
+-record(state, {account, ws_pid, user}).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -34,7 +35,7 @@ init([Account, WsPid]) ->
     case catch gproc:add_local_name(?USER_PID(Account)) of
         true ->
             erlang:process_flag(trap_exit, true),
-            {ok, #state{account = Account, ws_pid = WsPid}};
+            {ok, #state{account = Account, ws_pid = WsPid, user = game_user:load(Account)}};
         _ ->
             {stop, normal}
     end.
@@ -47,9 +48,17 @@ handle_cast(_Request, State = #state{}) ->
 
 handle_info({msg, _Msg}, State = #state{}) ->
     {noreply, State};
-handle_info({settle, Msg, Profit}, State = #state{ws_pid = WsPid, chips = Chips}) ->
+handle_info({settle, Msg, {?GUEST, Profit}}, State = #state{ws_pid = WsPid,
+    user = #user{type = ?GUEST, bonus_credits = BonusCredits} = User}) ->
     WsPid ! {send, Msg},
-    {noreply, State#state{chips = Profit + Chips}};
+    NewUser = User#user{bonus_credits = BonusCredits + Profit},
+    {noreply, State#state{user = NewUser}};
+handle_info({settle, Msg, {?NORMAL, Profit}}, State = #state{ws_pid = WsPid
+    , user = #user{real_money = RealMoney} = User}) ->
+    WsPid ! {send, Msg},
+    NewUser = User#user{real_money = RealMoney + Profit},
+    game_user:save(NewUser),
+    {noreply, State#state{user = NewUser}};
 handle_info({send, Msg}, State = #state{ws_pid = WsPid}) ->
     WsPid ! {send, Msg},
     {noreply, State};

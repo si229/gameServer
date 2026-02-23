@@ -1,4 +1,5 @@
-
+-define(GUEST,1).
+-define(NORMAL,2).
 
 -define(INFO(__MSG__),lager:info(__MSG__)).
 -define(INFO(__Format__,__MSG__),lager:info(__Format__,__MSG__)).

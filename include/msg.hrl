@@ -1,8 +1,18 @@
 %%------ 错误码
+-define(fail, -1). %%
 -define(ok, 0). %%
 -define(insufficient_balance, 1). %% 余额不足
 -define(bet_exceeds_limit, 2). %% 限红
 -define(account_logged_another, 3). %% 异地登录
+
+-define(invalid_verification_code, 4). %% 验证码错误
+-define(is_already_linked, 5). %% 已绑定
+-define(other_already_linked, 6). %% 被其他账号绑定
+-define(invalid_password, 7). %% 密码错误
+-define(invalid_email, 8). %% 无效邮箱
+-define(invalid_phone, 9). %% 无效电话
+-define(not_set_password_email, 10). %% 此游戏未设置密码
+-define(not_set_password_phone, 11). %% 此游戏未设置密码
 
 
 %%------ 阶段 ----
@@ -25,6 +35,14 @@
 -define(tie, 9).
 
 
+
+%%--- 登录方式
+-define(login_with_guest,0).
+-define(login_with_email_password,1).
+-define(login_with_phone_password,2).
+-define(login_with_email_code,3).
+-define(login_with_phone_code,4).
+
 -record(heartbeat_req, {
     id
 }).
@@ -35,14 +53,47 @@
 }).
 
 -record(login_req, {
-    account,
-    password
+    option,   %% 登录方式
+    email,
+    phone,
+    password,
+    code      %% （游客模式，（手机，邮件）第一次请求 不用填写）
 }).
 
 -record(login_resp, {
     account,
-    chips,
+    bonus_credits,  %% 体验金额
+    real_money,     %% 真实金额
     reconnect_info
+}).
+
+-record(bind_email_req,{
+    email,
+    code
+}).
+
+-record(bind_email_resp,{
+    code
+}).
+
+-record(bind_phone_req,{
+    num,
+    code
+}).
+
+-record(bind_phone_resp,{
+    code
+}).
+
+
+-record(bind_password_req,{
+    phone,
+    email,
+    password
+}).
+
+-record(bind_password_resp,{
+    code
 }).
 
 
@@ -62,7 +113,6 @@
     deal_info,
     result     %% 结算阶段推送
 }).
-
 
 %% 下注请求
 -record(betting_req,

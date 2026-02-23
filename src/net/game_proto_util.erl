@@ -10,11 +10,30 @@
 -author("si").
 
 %% API
--export([login_resp/3, phase_change_push/3, phase_change_push/4, phase_change_push/5]).
+-export([login_resp/1,login_resp/3, phase_change_push/3, phase_change_push/4, phase_change_push/5]).
+
+-export([
+    bind_email/1,
+    bind_phone/1,
+    bind_password/1
+]).
 
 login_resp(Account, Chips, ReconnectInfo) ->
     jsx:encode(#{msg_id => login_resp, account => Account, chips => Chips, reconnect_info => ReconnectInfo}).
 
+login_resp(Code) ->
+    jsx:encode(#{msg_id => login_resp, code=>Code}).
+
+bind_email(Code) ->
+    jsx:encode(#{msg_id => bind_email_resp, code => Code}).
+
+
+bind_phone(Code) ->
+    jsx:encode(#{msg_id => bind_phone_resp, code => Code}).
+
+
+bind_password(Code) ->
+    jsx:encode(#{msg_id => bind_password_resp, code => Code}).
 
 %% 阶段变更信息
 phase_change_push(Phase, CutOffTime, ResetTheRoad) ->
