@@ -206,10 +206,10 @@ handle_state(?betting, CutOffTime, #state{} = State) ->
 handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     player_cards = PlayerCards, banker_cards = BankerCards
     , guest_role_list = GuestRoleList,
-    normal_role_list = NormalRoleList, type = Type
+    normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Payout = game_baccarat:payout_calculation(PlayerCards, BankerCards),
+    Payout = game_baccarat:payout_calculation(GameType,PlayerCards, BankerCards),
 
     NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
@@ -253,18 +253,18 @@ broadcast(Msg, #state{guest_role_list = GuestRoleList, normal_role_list = Normal
         Pid ! {send, Msg}
                   end, NormalRoleList).
 
-broadcast(SelfMsg, OtherMsg, Account, #state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
-    lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
-        if A =/= Account ->
-            Pid ! {send, OtherMsg};
-            true ->
-                Pid ! {send, SelfMsg}
-        end
-                  end, GuestRoleList),
-    lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
-        if A =/= Account ->
-            Pid ! {send, OtherMsg};
-            true ->
-                Pid ! {send, SelfMsg}
-        end
-                  end, NormalRoleList).
+%%broadcast(SelfMsg, OtherMsg, Account, #state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
+%%    lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
+%%        if A =/= Account ->
+%%            Pid ! {send, OtherMsg};
+%%            true ->
+%%                Pid ! {send, SelfMsg}
+%%        end
+%%                  end, GuestRoleList),
+%%    lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
+%%        if A =/= Account ->
+%%            Pid ! {send, OtherMsg};
+%%            true ->
+%%                Pid ! {send, SelfMsg}
+%%        end
+%%                  end, NormalRoleList).
