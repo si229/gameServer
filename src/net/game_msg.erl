@@ -19,7 +19,6 @@
 handle_not_login_msg(#{<<"msg_id">> := <<"heartbeat_req">>, <<"id">> := Id}, State) ->
     Time = erlang:system_time(1000),
     RespMsg = jsx:encode(#{msg_id => heartbeat_resp, time => Time, id => Id}),
-    ?WARNING("# heartbeat_req ~p",[{Id,Time}]),
     {ok, RespMsg, State#game_net_state{last_heartbeat = Time}};
 
 handle_not_login_msg(#{<<"msg_id">> := <<"login_req">>} = Msg, State) ->

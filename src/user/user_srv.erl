@@ -47,15 +47,42 @@ init([#user{account = Account} = User, WsPid]) ->
             {stop, normal}
     end.
 
-handle_call(_Request, _From, State = #user_state{}) ->
+handle_call(Request, From, State) ->
+    try
+        handle_call_do(Request, From, State)
+    catch
+        E:E1:E2 ->
+            ?WARNING("~p", [{E, E1, E2}]),
+            {reply, error, State}
+    end.
+
+handle_cast(Request, State) ->
+    try
+        handle_cast_do(Request, State)
+    catch
+        E:E1:E2 ->
+            ?WARNING("~p", [{E, E1, E2}]),
+            {noreply, State}
+    end.
+
+handle_info(Request, State) ->
+    try
+        handle_info_do(Request, State)
+    catch
+        E:E1:E2 ->
+            ?WARNING("~p", [{E, E1, E2}]),
+            {noreply, State}
+    end.
+
+handle_call_do(_Request, _From, State = #user_state{}) ->
     {reply, ok, State}.
 
-handle_cast(_Request, State = #user_state{}) ->
+handle_cast_do(_Request, State = #user_state{}) ->
     {noreply, State}.
 
-handle_info({reconnect, WsPid}, #user_state{} = State) ->
+handle_info_do({reconnect, WsPid}, #user_state{} = State) ->
     {noreply, State#user_state{ws_pid = WsPid}};
-handle_info({msg, Msg}, State = #user_state{ws_pid = WsPid}) ->
+handle_info_do({msg, Msg}, State = #user_state{ws_pid = WsPid}) ->
     case game_msg:handle_game_msg(Msg, State) of
         {ok, #user_state{} = NewState} ->
             {noreply, NewState};
@@ -65,27 +92,27 @@ handle_info({msg, Msg}, State = #user_state{ws_pid = WsPid}) ->
         _ ->
             {noreply, State}
     end;
-handle_info({settle, Msg, {?GUEST, Profit}}, State = #user_state{ws_pid = WsPid,
+handle_info_do({settle, Msg, {?GUEST, Profit}}, State = #user_state{ws_pid = WsPid,
     user = #user{bonus_credits = BonusCredits} = User}) ->
     send_msg(WsPid, Msg),
     NewUser = User#user{bonus_credits = BonusCredits + Profit},
     {noreply, State#user_state{user = NewUser}};
-handle_info({settle, Msg, {?NORMAL, Profit}}, State = #user_state{ws_pid = WsPid
+handle_info_do({settle, Msg, {?NORMAL, Profit}}, State = #user_state{ws_pid = WsPid
     , user = #user{real_money = RealMoney} = User}) ->
     send_msg(WsPid, Msg),
     NewUser = User#user{real_money = RealMoney + Profit},
     game_user:save(NewUser),
     {noreply, State#user_state{user = NewUser}};
-handle_info({send, Msg}, State = #user_state{ws_pid = WsPid}) ->
+handle_info_do({send, Msg}, State = #user_state{ws_pid = WsPid}) ->
     send_msg(WsPid, Msg),
     {noreply, State};
 
-handle_info({'DOWN', _Ref, process, WsPid, Reason}, State = #user_state{ws_pid = WsPid, account = Account}) ->
+handle_info_do({'DOWN', _Ref, process, WsPid, Reason}, State = #user_state{ws_pid = WsPid, account = Account}) ->
     ?WARNING("# offline  ~p", [{Account, Reason}]),
     {noreply, State#user_state{ws_pid = erlang:system_time(1000)}};
 
 
-handle_info({timeout, _, loop_timer}, State = #user_state{}) ->
+handle_info_do({timeout, _, loop_timer}, State = #user_state{}) ->
     case handle_loop(State) of
         stop ->
             {stop, normal, State};
@@ -97,7 +124,7 @@ handle_info({timeout, _, loop_timer}, State = #user_state{}) ->
             {noreply, State}
     end;
 
-handle_info(_Info, State = #user_state{}) ->
+handle_info_do(_Info, State = #user_state{}) ->
     {noreply, State}.
 
 terminate(_Reason, _State = #user_state{}) ->

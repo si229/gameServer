@@ -6,6 +6,6 @@
     , pid
     , bonus_credits = 0
     , real_money = 0
-    , bet_info
+    , bet_info = []
 }).
 
