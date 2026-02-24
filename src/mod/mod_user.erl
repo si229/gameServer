@@ -84,9 +84,10 @@ login_do(Account, ?login_with_guest, State) ->
 %%        real_money,     %% 真实金额
 %%        reconnect_info
 %%    }).
-    case supervisor:start_child(user_sup, [#user{account = Account, type = ?GUEST}, self()]) of
+    User = #user{account = Account, type = ?GUEST},
+    case supervisor:start_child(user_sup, [User, self()]) of
         {ok, Pid} ->
-            Msg = game_proto_util:login_resp(Account, 1000, none),
+            Msg = game_proto_util:login_resp(User, none),
             {ok, Msg, State#game_net_state{account = Account, pid = Pid}};
         R ->
             ?WARNING("# ~p", [R]),
@@ -98,7 +99,7 @@ login_do(Account, _, State) ->
         [#user{} = User] ->
             case supervisor:start_child(user_sup, [User, self()]) of
                 {ok, Pid} ->
-                    Msg = game_proto_util:login_resp(Account, 1000, none),
+                    Msg = game_proto_util:login_resp(User, none),
                     {ok, Msg, State#game_net_state{account = Account, pid = Pid}};
                 R ->
                     ?WARNING("# ~p", [R]),

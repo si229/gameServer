@@ -50,7 +50,7 @@ check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _Pla
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, _BankerCards, ?banker) ->
     if BankerPoint > PlayerPoint ->
-        odds({?banker, BankerPoint});
+        odds(?banker);
         true ->
             0
     end.

@@ -17,11 +17,13 @@
 
 -export([websocket_handle/2, websocket_init/1, websocket_info/2]).
 
+-export([terminate/3]).
+
 -define(NOT_LOGIN_MSG_ID, [<<"heartbeat_req">>, <<"login_req">>]).
 
 init(Req, Opts) ->
     IpBin = get_ip([<<"cdn-src-ip">>, <<"x-forwarded-for">>], Req),
-    {cowboy_websocket, Req, {IpBin, Opts}}.
+    {cowboy_websocket, Req, {IpBin, Opts}, #{idle_timeout => 300000}}.
 
 websocket_init({Ip, _}) ->
     State = game_net_handler:handler_init(#game_net_state{ip = Ip, last_heartbeat = erlang:system_time(1000)}),
@@ -66,21 +68,29 @@ websocket_info({send, []}, State) ->
 websocket_info({send, Binary}, State) ->
     send_msg(Binary, State);
 websocket_info(check_tick, #game_net_state{last_heartbeat = LastTime, timeout_times = TimeoutTimes} = State) ->
-    case LastTime + ?HEARTBEAT_KICK_OUT_TIMEOUT >= erlang:system_time(1000) of
+    case LastTime + ?HEARTBEAT_KICK_OUT_TIMEOUT < erlang:system_time(1000) of
         true when TimeoutTimes > ?HEARTBEAT_MAX_TIMEOUT ->
+            ?WARNING("-- stop ~p", [{LastTime, TimeoutTimes}]),
             {stop, State};
         true ->
-            {stop, State#game_net_state{timeout_times = TimeoutTimes + 1}};
+            ?WARNING("-- stop ~p", [{LastTime, TimeoutTimes}]),
+            {ok, State#game_net_state{timeout_times = TimeoutTimes + 1}};
         false ->
             {ok, State#game_net_state{timeout_times = 0}}
     end;
 websocket_info({stop, BinaryList}, State) ->
+    ?WARNING("-- stop ~p", [jsx:decode(BinaryList)]),
     send_stop_msg(BinaryList, State);
 websocket_info(stop, State) ->
+    ?WARNING("-- stop "),
     {stop, State};
 websocket_info(Msg, State) ->
     ?WARNING("-- unknown ~p", [{Msg, State}]),
     {stop, State}.
+
+terminate(Reason, Req, State) ->
+    ?WARNING("WebSocket closed: ~p~n", [{Reason, Req, State}]),
+    ok.
 
 get_ip([HeaderName | Headers], Req) ->
     case cowboy_req:header(HeaderName, Req) of
@@ -107,4 +117,4 @@ send_msg(RespBinary, State) ->
 
 send_stop_msg(RespBinary, State) ->
     RespBinaryList = [{binary, Binary} || Binary <- RespBinary],
-    {reply, RespBinaryList ++ [{close, 1000, <<>>}], State}.
+    {reply, RespBinaryList ++ [{close, 1001, <<"close">>}], State}.

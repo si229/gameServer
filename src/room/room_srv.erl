@@ -156,7 +156,7 @@ handle_loop(#state{phase_state = {Phase, CutOffTime}} = State) ->
     Now = ?MILLI_TIMESTAMP,
     if CutOffTime =< Now ->
         {NewPhase, NewCutOffTime} = next_state(Phase),
-        ?INFO("# ~p", [Phase]),
+%%        ?INFO("# ~p", [Phase]),
         handle_state(NewPhase, NewCutOffTime, State);
         true ->
             State

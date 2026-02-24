@@ -12,6 +12,7 @@
 start(_StartType, _StartArgs) ->
     case game_server_sup:start_link() of
         {ok, _} = R ->
+            game_server_id:start(),
             game_net:init(),
             game_net:start(),
             game_baccarat:init(),

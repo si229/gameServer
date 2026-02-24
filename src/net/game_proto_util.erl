@@ -9,8 +9,10 @@
 -module(game_proto_util).
 -author("si").
 
+-include("user.hrl").
+
 %% API
--export([login_resp/1,login_resp/3, phase_change_push/3, phase_change_push/4, phase_change_push/5]).
+-export([login_resp/1, login_resp/2, phase_change_push/3, phase_change_push/4, phase_change_push/5]).
 
 -export([
     bind_email/1,
@@ -20,11 +22,14 @@
     leave_room/1
 ]).
 
-login_resp(Account, Chips, ReconnectInfo) ->
-    jsx:encode(#{msg_id => login_resp, account => Account, chips => Chips, reconnect_info => ReconnectInfo}).
+login_resp(#user{account = Account, bonus_credits = BonusCredits, real_money = RealMoney}, ReconnectInfo) ->
+    jsx:encode(#{msg_id => login_resp, account => Account
+        , bonus_credits => BonusCredits
+        , real_money => RealMoney
+        , reconnect_info => ReconnectInfo}).
 
 login_resp(Code) ->
-    jsx:encode(#{msg_id => login_resp, code=>Code}).
+    jsx:encode(#{msg_id => login_resp, code => Code}).
 
 bind_email(Code) ->
     jsx:encode(#{msg_id => bind_email_resp, code => Code}).
