@@ -31,6 +31,8 @@ handle_game_msg(#{<<"msg_id">> := <<"bind_password_req">>} = Msg, State) ->
 handle_game_msg(#{<<"msg_id">> := <<"enter_room_req">>} = Msg, State) ->
     mod_room:enter_room(Msg, State);
 handle_game_msg(#{<<"msg_id">> := <<"leave_room_req">>} = Msg, State) ->
-    mod_room:leave_room(Msg, State).
+    mod_room:leave_room(Msg, State);
+handle_game_msg(#{<<"msg_id">> := <<"betting_req">>} = Msg, State) ->
+    mod_room:bet(Msg, State).
 
 

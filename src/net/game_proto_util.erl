@@ -19,7 +19,8 @@
     bind_phone/1,
     bind_password/1,
     enter_room/1,
-    leave_room/1
+    leave_room/1,
+    bet/3
 ]).
 
 login_resp(#user{account = Account, bonus_credits = BonusCredits, real_money = RealMoney}, ReconnectInfo) ->
@@ -47,6 +48,11 @@ enter_room(Code) ->
 
 leave_room(Code) ->
     jsx:encode(#{msg_id => leave_room_resp, code => Code}).
+
+
+bet(IsSelf, Amount, Code) ->
+    jsx:encode(#{msg_id => bet_push, code => Code, is_self => IsSelf, amount => Amount}).
+
 
 %% 阶段变更信息
 phase_change_push(Phase, CutOffTime, ResetTheRoad) ->

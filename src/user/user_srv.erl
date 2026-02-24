@@ -86,8 +86,8 @@ handle_info_do({msg, Msg}, State = #user_state{ws_pid = WsPid}) ->
     case game_msg:handle_game_msg(Msg, State) of
         {ok, #user_state{} = NewState} ->
             {noreply, NewState};
-        {ok, Msg, #user_state{} = NewState} ->
-            send_msg(WsPid, Msg),
+        {ok, RespMsg, #user_state{} = NewState} ->
+            send_msg(WsPid, RespMsg),
             {noreply, NewState};
         _ ->
             {noreply, State}
