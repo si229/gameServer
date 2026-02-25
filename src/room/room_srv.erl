@@ -22,7 +22,7 @@
 -include("common.hrl").
 -define(ROOM_PID(ID), {room_pid, ID}).
 
--record(state, {id, type, guest_role_list = [], game_type
+-record(state, {id, play_type, guest_role_list = [], game_type
     , normal_role_list = [], loop_timer_ref, phase_state
     , deck = [], player_cards, banker_cards, hash_value
     , deal_info
@@ -69,7 +69,7 @@ init([Type, GameType]) ->
     case catch gproc:add_local_name(?ROOM_PID({Type, GameType})) of
         true ->
             erlang:process_flag(trap_exit, true),
-            {ok, #state{type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType}};
+            {ok, #state{play_type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType}};
         _ ->
             {stop, normal}
     end.
@@ -103,7 +103,7 @@ handle_info(Request, State = #state{}) ->
 
 
 handle_call_do({enter, #room_role{account = Account, pid = Pid} = R}, _From
-    , State = #state{type = ?GUEST, guest_role_list = GuestRoleList}) ->
+    , State = #state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
     NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
                            {value, #room_role{} = Role, LGuestRoleList} ->
                                [Role#room_role{pid = Pid} | LGuestRoleList];
@@ -249,7 +249,7 @@ handle_state(?preparation, CutOffTime, #state{deck = Deck} = State) ->
     end;
 
 
-handle_state(?dealing, CutOffTime, #state{deck = Deck, type = ?GUEST} = State) ->
+handle_state(?dealing, CutOffTime, #state{deck = Deck, play_type = ?GUEST} = State) ->
     {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
     {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
     DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
@@ -281,17 +281,11 @@ handle_state(?betting, CutOffTime, #state{} = State) ->
 
 handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
     player_cards = PlayerCards, banker_cards = BankerCards
-    , guest_role_list = GuestRoleList,
+    , guest_role_list = GuestRoleList, play_type = PlayType,
     normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Payout = game_baccarat:payout_calculation(GameType, PlayerCards, BankerCards),
-
-    if length(GuestRoleList) =/= 0 ->
-        ?INFO("## ~p", [{?settlement, length(GuestRoleList), length(GuestRoleList)}]);
-        true ->
-            skip
-    end,
     NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
@@ -305,6 +299,8 @@ handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
         Pid ! {settle, Msg, {?NORMAL, Profit}},
         Role#room_role{real_money = Chips + Profit}
                                   end, NormalRoleList),
+
+    game_server_room:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
 
     State#state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
 
@@ -326,7 +322,7 @@ next_state(Phase, [{Phase, _}, Next | _]) -> Next;
 next_state(Phase, [_ | Next]) -> next_state(Phase, Next).
 
 
-broadcast(Msg, #state{type = ?GUEST, guest_role_list = GuestRoleList}) ->
+broadcast(Msg, #state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
     lists:foreach(fun(#room_role{pid = Pid}) ->
         Pid ! {send, Msg}
                   end, GuestRoleList);

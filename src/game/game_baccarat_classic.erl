@@ -18,11 +18,14 @@ payout_calculation(PlayerCards, BankerCards) ->
     PlayerCardNum = length(PlayerCards),
     BankerCardNum = length(BankerCards),
     AreaList = [?banker_pair, ?player_pair, ?banker, ?player, ?tie],
-    lists:map(fun(Area) ->
+    lists:filtermap(fun(Area) ->
         Odds = check_winner_area(PlayerPoint, BankerPoint, PlayerCardNum
             , BankerCardNum, PlayerCards, BankerCards, Area),
-        {Area, Odds}
-              end, AreaList).
+        if Odds == 0 -> false;
+            true ->
+                {true, {Area, Odds}}
+        end
+                    end, AreaList).
 
 check_winner_area(_PlayerPoint, _BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, BankerCards, ?banker_pair) ->
     case BankerCards of

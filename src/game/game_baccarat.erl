@@ -10,15 +10,19 @@
 
 
 -export([deal/1, try_reshuffle_the_shoe/1]).
--export([init_shoe/0, init/0,get_point/1]).
+-export([init_shoe/0, init/0, get_point/1]).
 
 -export([gen_hash/2, payout_calculation/3, settlement/2]).
 
 init_shoe() ->
     Deck = ?DECK,
-    lists:foldl(fun(_, Acc) ->
+    Shoe = lists:foldl(fun(_, Acc) ->
         Deck ++ Acc
-                end, Deck, lists:seq(2, ?SHOE_SIZE)).
+                       end, Deck, lists:seq(2, ?SHOE_SIZE)),
+
+    card:shuffle(Shoe).
+
+%%    Shoe.
 
 init() ->
     supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_LUCKY]),
@@ -44,7 +48,8 @@ deal([PlayerCard1, PlayerCard2, BankerCard1, BankerCard2 | Res]) ->
         {PlayerCard, BankerCard, Res};
         true ->
             {IsPlayerPick, NewPlayerCard, PlayerPickPoint, NewRes} =
-                if PlayerPoint >= 6 -> {false, PlayerCard, get_point([PlayerCard2]), Res};
+                if PlayerPoint >= 6 ->
+                    {false, PlayerCard, get_point([PlayerCard2]), Res};
                     true ->
                         [PPickCard | Res1] = Res,
                         {true, PlayerCard ++ [PPickCard], get_point([PPickCard]), Res1}
@@ -92,7 +97,7 @@ deal([PlayerCard1, PlayerCard2, BankerCard1, BankerCard2 | Res]) ->
 get_point(CardList) ->
     lists:foldl(fun({Point, _}, Acc) ->
         if Point =< 9 -> Acc + Point;
-            true -> Point
+            true -> Acc
         end
                 end, 0, CardList) rem 10.
 
@@ -107,7 +112,11 @@ gen_hash(PlayerCards, BankerCards) ->
     Str = lists:flatten([
         begin
             if is_integer(X) ->
-                integer_to_list(X);
+                if X < 10 ->
+                    ["0" | integer_to_list(X)];
+                    true ->
+                        integer_to_list(X)
+                end;
                 true ->
                     X
             end
@@ -140,7 +149,7 @@ sha256(InputBin) ->
 
 settlement(BetList, Payout) ->
     lists:foldl(fun({BetArea, Amount}, Acc) ->
-        Odds = proplists:get_value(BetArea, Payout),
+        Odds = proplists:get_value(BetArea, Payout, 0),
         if Odds == 0 ->
             Acc;
             true ->
@@ -151,3 +160,4 @@ payout_calculation(?GAME_TYPE_CLASSIC, PlayerCards, BankerCards) ->
     game_baccarat_classic:payout_calculation(PlayerCards, BankerCards);
 payout_calculation(?GAME_TYPE_LUCKY, PlayerCards, BankerCards) ->
     game_baccarat_lucky:payout_calculation(PlayerCards, BankerCards).
+

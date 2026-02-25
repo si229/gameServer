@@ -23,19 +23,20 @@ init() ->
 clean(PlayType, GameType) ->
     ets:delete(?ETS_ROADS, {PlayType, GameType}).
 
-add_road(PlayType, GameType, Result) ->
+add_road(PlayType, GameType, {_PayZone, _PlayerCards, _BankerCards} = Result) ->
     Key = {PlayType, GameType},
     case ets:lookup(?ETS_ROADS, Key) of
         [#ets_roads{roads = Roads} = E] ->
             ets:insert(?ETS_ROADS, E#ets_roads{roads = [Result | Roads]});
         _ ->
-            ets:insert(?ETS_ROADS, #ets_roads{roads = [Result], key = [Result]})
+            ets:insert(?ETS_ROADS, #ets_roads{roads = [Result], key = Key})
     end.
 
 get_road(PlayType, GameType) ->
     Key = {PlayType, GameType},
     case ets:lookup(?ETS_ROADS, Key) of
-        [#ets_roads{roads = Roads}] -> Roads;
+        [#ets_roads{roads = Roads}] ->
+            [PayZone || {PayZone, _PlayerCards, _BankerCards} <- Roads];
         _ ->
             []
     end.

@@ -16,6 +16,7 @@
 -export([enter_room/2
     , leave_room/2
     , bet/2
+    , roads/2
 ]).
 
 
@@ -88,4 +89,9 @@ bet(#{<<"msg_id">> := <<"betting_req">>
             Msg = game_proto_util:bet(true, Amount, ?fail),
             {ok, Msg, UserState}
     end.
+
+
+roads(#{<<"msg_id">> := <<"roads_req">>}, #user_state{user = #user{}, play_type = PlayType, game_type = GameType} = UserState) ->
+    Msg = game_proto_util:roads(PlayType, GameType),
+    {ok, Msg, UserState}.
 

@@ -58,7 +58,7 @@ bet(IsSelf, Amount, Code) ->
 
 roads(PlayType, GameType) ->
     Roads = game_server_room:get_road(PlayType, GameType),
-    Value = #{play_type => PlayType, game_type => game_type, data => Roads},
+    Value = #{play_type => PlayType, game_type => GameType, data => Roads},
     Msg = #{msg_id => roads_resp, data => [Value]},
     jsx:encode(Msg).
 
