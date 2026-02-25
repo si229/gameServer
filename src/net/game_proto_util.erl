@@ -9,8 +9,9 @@
 -module(game_proto_util).
 -author("si").
 
+-include("common.hrl").
 -include("user.hrl").
-
+-include("room.hrl").
 %% API
 -export([login_resp/1, login_resp/2, phase_change_push/3, phase_change_push/4, phase_change_push/5]).
 
@@ -20,7 +21,9 @@
     bind_password/1,
     enter_room/1,
     leave_room/1,
-    bet/3
+    bet/3,
+    roads/0,
+    roads/2
 ]).
 
 login_resp(#user{account = Account, bonus_credits = BonusCredits, real_money = RealMoney}, ReconnectInfo) ->
@@ -53,6 +56,22 @@ leave_room(Code) ->
 bet(IsSelf, Amount, Code) ->
     jsx:encode(#{msg_id => bet_push, code => Code, is_self => IsSelf, amount => Amount}).
 
+roads(PlayType, GameType) ->
+    Roads = game_server_room:get_road(PlayType, GameType),
+    Value = #{play_type => PlayType, game_type => game_type, data => Roads},
+    Msg = #{msg_id => roads_resp, data => [Value]},
+    jsx:encode(Msg).
+
+roads() ->
+    Values = [
+        begin
+            Roads = game_server_room:get_road(PlayType, GameType),
+            #{play_type => PlayType, game_type => game_type, data => Roads}
+        end
+        ||
+        PlayType <- [?GUEST, ?NORMAL], GameType <- [?GAME_TYPE_LUCKY, ?GAME_TYPE_CLASSIC]],
+    Msg = #{msg_id => roads_resp, data => Values},
+    jsx:encode(Msg).
 
 %% 阶段变更信息
 phase_change_push(Phase, CutOffTime, ResetTheRoad) ->
