@@ -53,8 +53,8 @@ leave_room(Code) ->
     jsx:encode(#{msg_id => leave_room_resp, code => Code}).
 
 
-bet(IsSelf, Amount, Code) ->
-    jsx:encode(#{msg_id => bet_push, code => Code, is_self => IsSelf, amount => Amount}).
+bet(RoleBetInfo,RoomBetInfo, Code) ->
+    jsx:encode(#{msg_id => bet_push, code => Code, role_bet_info=>RoleBetInfo, room_bet_info=>RoomBetInfo}).
 
 roads(PlayType, GameType) ->
     Roads = game_server_room:get_road(PlayType, GameType),

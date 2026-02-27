@@ -32,6 +32,7 @@ websocket_init({Ip, _}) ->
 
 websocket_handle({binary, Binary}, #game_net_state{pid = Pid} = State) ->
     MapMsg = jsx:decode(Binary, [return_maps]),
+    ?WARNING("-- ~p", [MapMsg]),
     MsgId = maps:get(<<"msg_id">>, MapMsg),
     case lists:member(MsgId, ?NOT_LOGIN_MSG_ID) of
         true ->
@@ -54,8 +55,33 @@ websocket_handle({binary, Binary}, #game_net_state{pid = Pid} = State) ->
             {ok, State}
     end;
 
-websocket_handle({text, _Binary}, State) ->
-    {reply, {text, <<"notsupport">>}, State};
+websocket_handle({text, Binary}, #game_net_state{pid = Pid} = State) ->
+    ?WARNING("-- ~p", [Binary]),
+
+    MapMsg = jsx:decode(Binary, [return_maps]),
+
+    MsgId = maps:get(<<"msg_id">>, MapMsg),
+    case lists:member(MsgId, ?NOT_LOGIN_MSG_ID) of
+        true ->
+            case catch game_msg:handle_not_login_msg(MapMsg, State) of
+                {ok, RespBinary, NewState} ->
+                    send_msg(RespBinary, NewState);
+                {ok, NewState} -> {ok, NewState};
+                {stop, Reason, RespBinary, NewState} ->
+                    ?WARNING("-- ~p", [Reason]),
+                    send_stop_msg(RespBinary, NewState);
+                {stop, Reason, NewState} ->
+                    ?WARNING("-- ~p", [Reason]),
+                    {stop, NewState};
+                R ->
+                    ?WARNING("-- ~p", [R]),
+                    {ok, State}
+            end;
+        false ->
+            Pid ! {msg, MapMsg},
+            {ok, State}
+    end;
+
 websocket_handle({ping, Binary}, State) ->
     {reply, {pong, Binary}, State};
 websocket_handle(Data, State) ->
@@ -108,13 +134,25 @@ get_ip([], Req) ->
     {{A, B, C, D}, _} = cowboy_req:peer(Req),
     list_to_binary(lists:concat(lists:join(".", [A, B, C, D]))).
 
+%%send_msg([], State) -> {ok, State};
+%%send_msg(RespBinary, State) when is_list(RespBinary) ->
+%%    RespBinaryList = [{binary, Binary} || Binary <- RespBinary],
+%%    {reply, RespBinaryList, State};
+%%send_msg(RespBinary, State) ->
+%%    {reply, [{binary, RespBinary}], State}.
+%%
+%%send_stop_msg(RespBinary, State) ->
+%%    RespBinaryList = [{binary, Binary} || Binary <- RespBinary],
+%%    {reply, RespBinaryList ++ [{close, 1001, <<"close">>}], State}.
+
+
 send_msg([], State) -> {ok, State};
 send_msg(RespBinary, State) when is_list(RespBinary) ->
-    RespBinaryList = [{binary, Binary} || Binary <- RespBinary],
+    RespBinaryList = [{text, Binary} || Binary <- RespBinary],
     {reply, RespBinaryList, State};
 send_msg(RespBinary, State) ->
-    {reply, [{binary, RespBinary}], State}.
+    {reply, [{text, RespBinary}], State}.
 
 send_stop_msg(RespBinary, State) ->
-    RespBinaryList = [{binary, Binary} || Binary <- RespBinary],
+    RespBinaryList = [{text, Binary} || Binary <- RespBinary],
     {reply, RespBinaryList ++ [{close, 1001, <<"close">>}], State}.

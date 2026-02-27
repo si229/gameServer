@@ -25,7 +25,7 @@
 -record(state, {id, play_type, guest_role_list = [], game_type
     , normal_role_list = [], loop_timer_ref, phase_state
     , deck = [], player_cards, banker_cards, hash_value
-    , deal_info
+    , deal_info, bet_info = []
 }).
 
 -define(LOOP_TIMER(), erlang:start_timer(500, self(), loop_timer)).
@@ -144,21 +144,26 @@ handle_call_do({leave, Account}, _From
 
 
 handle_call_do({bet, {Account, ?GUEST, Zone, Amount}}, _From
-    , State = #state{guest_role_list = GuestRoleList}) ->
+    , State = #state{guest_role_list = GuestRoleList,bet_info = RoomBetInfo}) ->
     case lists:keytake(Account, #room_role.account, GuestRoleList) of
         {value, #room_role{bet_info = BetInfo} = Role, LGuestRoleList} ->
             NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
+            NewRoomBetAmount = proplists:get_value(Zone, RoomBetInfo, 0) + Amount,
             NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
-            SMsg = game_proto_util:bet(true, Amount, ?ok),
-            Msg = game_proto_util:bet(false, Amount, ?ok),
-            lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
+            NewRoomBetInfo = lists:keystore(Zone, 1, RoomBetInfo, {Zone, NewRoomBetAmount}),
+            SMsg = game_proto_util:bet(BetInfo,NewRoomBetInfo, ?ok),
+            lists:foreach(fun(#room_role{pid = Pid, account = A,bet_info = RoleBetInfo}) ->
+                Msg = game_proto_util:bet(RoleBetInfo, NewRoomBetInfo, ?ok),
                 if A == Account ->
                     Pid ! {send, SMsg};
                     true ->
                         Pid ! {send, Msg}
                 end
                           end, GuestRoleList),
-            {reply, ok, State#state{guest_role_list = [Role#room_role{bet_info = NewBetInfo} | LGuestRoleList]}};
+            {reply, ok, State#state{
+                guest_role_list = [Role#room_role{bet_info = NewBetInfo} | LGuestRoleList],
+                bet_info = NewRoomBetInfo
+            }};
         _ ->
             {reply, ok, State}
     end;

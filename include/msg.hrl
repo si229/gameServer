@@ -120,11 +120,12 @@
     amount,
     zone
 }).
+
 %% 下注信息推送
 -record(bet_push,
 {
-    is_self,
-    amount,
+    role_bet_info,
+    room_bet_info,
     code
 }).
 
