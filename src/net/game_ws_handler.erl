@@ -56,10 +56,7 @@ websocket_handle({binary, Binary}, #game_net_state{pid = Pid} = State) ->
     end;
 
 websocket_handle({text, Binary}, #game_net_state{pid = Pid} = State) ->
-    ?WARNING("-- ~p", [Binary]),
-
     MapMsg = jsx:decode(Binary, [return_maps]),
-
     MsgId = maps:get(<<"msg_id">>, MapMsg),
     case lists:member(MsgId, ?NOT_LOGIN_MSG_ID) of
         true ->

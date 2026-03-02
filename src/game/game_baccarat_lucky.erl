@@ -22,7 +22,7 @@ payout_calculation(PlayerCards, BankerCards) ->
     lists:filtermap(fun(Area) ->
         Odds = check_winner_area(PlayerPoint, BankerPoint, PlayerCardNum
             , BankerCardNum, PlayerCards, BankerCards, Area),
-        if Odds == 0 -> false;
+        if Odds == -1 -> false;
             true ->
                 {true, {Area, Odds}}
         end
@@ -32,61 +32,65 @@ check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _Play
     if BankerPoint > PlayerPoint andalso BankerPoint == 7 ->
         odds({?lucky_7, BankerCardNum});
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _PlayerCards, _BankerCards, ?super_lucky_7) ->
     if BankerPoint > PlayerPoint andalso BankerPoint == 7 andalso BankerCardNum == 3 ->
         odds(?super_lucky_7);
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _PlayerCards, _BankerCards, ?lucky_6) ->
     if BankerPoint > PlayerPoint andalso BankerPoint == 6 ->
         odds({?lucky_6, BankerCardNum});
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _PlayerCards, _BankerCards, ?lucky_6_2) ->
     if BankerPoint > PlayerPoint andalso BankerPoint == 6 andalso BankerCardNum == 2 ->
         odds(?lucky_6_2);
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _PlayerCards, _BankerCards, ?lucky_6_3) ->
     if BankerPoint > PlayerPoint andalso BankerPoint == 6 andalso BankerCardNum == 3 ->
         odds(?lucky_6_3);
         true ->
-            0
+            -1
     end;
 check_winner_area(_PlayerPoint, _BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, BankerCards, ?banker_pair) ->
     case BankerCards of
         [{P, _}, {P, _} | _] ->
             odds(?banker_pair);
-        _ -> 0
+        _ -> -1
     end;
 check_winner_area(_PlayerPoint, _BankerPoint, _PlayerCardNum, _BankerCardNum, PlayerCards, _BankerCards, ?player_pair) ->
     case PlayerCards of
         [{P, _}, {P, _} | _] ->
             odds(?banker_pair);
-        _ -> 0
+        _ -> -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, _BankerCards, ?tie) ->
     if BankerPoint == PlayerPoint ->
         odds(?tie);
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, _BankerCards, ?player) ->
     if BankerPoint < PlayerPoint ->
         odds(?player);
+        BankerPoint == PlayerPoint ->
+            0;
         true ->
-            0
+            -1
     end;
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _PlayerCards, _BankerCards, ?banker) ->
     if BankerPoint > PlayerPoint ->
         odds({?banker, BankerPoint});
+        BankerPoint == PlayerPoint ->
+            0;
         true ->
-            0
+            -1
     end.
 
 %%幸运百家乐

@@ -14,6 +14,8 @@
 
 -export([gen_hash/2, payout_calculation/3, settlement/2]).
 
+-export([try_shuffle_the_shoe/1]).
+
 init_shoe() ->
     Deck = ?DECK,
     Shoe = lists:foldl(fun(_, Acc) ->
@@ -36,6 +38,14 @@ try_reshuffle_the_shoe(Deck) ->
             {true, init_shoe()};
         false ->
             false
+    end.
+
+try_shuffle_the_shoe(Deck) ->
+    case length(Deck) =< ?SHOE_MIN_NUM of
+        true ->
+            init_shoe();
+        false ->
+            Deck
     end.
 
 
@@ -149,12 +159,9 @@ sha256(InputBin) ->
 
 settlement(BetList, Payout) ->
     lists:foldl(fun({BetArea, Amount}, Acc) ->
-        Odds = proplists:get_value(BetArea, Payout, 0),
-        if Odds == 0 ->
-            Acc;
-            true ->
-                Amount * Odds + Amount + Acc
-        end end, 0, BetList).
+        Odds = proplists:get_value(BetArea, Payout, -1),
+        Amount * Odds + Amount + Acc
+        end, 0, BetList).
 
 payout_calculation(?GAME_TYPE_CLASSIC, PlayerCards, BankerCards) ->
     game_baccarat_classic:payout_calculation(PlayerCards, BankerCards);
