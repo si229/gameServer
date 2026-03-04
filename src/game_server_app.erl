@@ -16,7 +16,7 @@ start(_StartType, _StartArgs) ->
             game_net:init(),
             game_net:start(),
             game_baccarat:init(),
-            game_server_room:init(),
+            room_road:init(),
             R;
         R ->
             R

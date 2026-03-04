@@ -81,7 +81,7 @@ handle_state(?settlement, CutOffTime, #room_state{deal_info = DealInfo,
         Role#room_role{real_money = Chips + Profit}
                                   end, NormalRoleList),
 
-    game_server_room:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
+    room_road:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
 
     State#room_state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
 

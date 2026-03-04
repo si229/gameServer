@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 25. 2月 2026 上午 8:28
 %%%-------------------------------------------------------------------
--module(game_server_room).
+-module(room_road).
 -author("si").
 
 -define(ETS_ROADS, ets_roads).

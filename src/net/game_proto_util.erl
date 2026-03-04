@@ -57,7 +57,7 @@ bet(RoleBetInfo,RoomBetInfo, Code) ->
     jsx:encode(#{msg_id => bet_push, code => Code, role_bet_info=>RoleBetInfo, room_bet_info=>RoomBetInfo}).
 
 roads(PlayType, GameType) ->
-    Roads = game_server_room:get_road(PlayType, GameType),
+    Roads = room_road:get_road(PlayType, GameType),
     Value = #{play_type => PlayType, game_type => GameType, data => Roads},
     Msg = #{msg_id => roads_resp, data => [Value]},
     jsx:encode(Msg).
@@ -65,7 +65,7 @@ roads(PlayType, GameType) ->
 roads() ->
     Values = [
         begin
-            Roads = game_server_room:get_road(PlayType, GameType),
+            Roads = room_road:get_road(PlayType, GameType),
             #{play_type => PlayType, game_type => game_type, data => Roads}
         end
         ||
