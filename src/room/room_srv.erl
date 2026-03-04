@@ -238,7 +238,7 @@ code_change(_OldVsn, State = #room_state{}, _Extra) ->
 handle_loop(#room_state{phase_state = undefined,room_mod = RoomMod} = State) ->
     {Phase, CutOffTime} = hd(RoomMod:phase_info()),
     RoomMod:handle_state(Phase, CutOffTime, State);
-handle_loop(#room_state{phase_state = {Phase, CutOffTime,room_mod = RoomMod}} = State) ->
+handle_loop(#room_state{phase_state = {Phase, CutOffTime},room_mod = RoomMod} = State) ->
     Now = ?MILLI_TIMESTAMP,
     if CutOffTime =< Now ->
         {NewPhase, NewCutOffTime} = RoomMod:next_state(Phase),

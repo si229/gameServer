@@ -1,0 +1,11 @@
+%%------ 区域 ----
+-define(big, 0).
+-define(small, 1).
+-define(single_number_bet, 2).
+-define(pair_bet, 3).
+-define(triple_bet, 4).
+-define(sum_bet, 5).
+-define(combination_bet, 6).
+-define(any_triple_bet, 7).
+-define(odd_bet, 8).  %% 单
+-define(even_bet, 9). %% 双

@@ -20,3 +20,6 @@ init() ->
     supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_FRENCH_ROULETTE]),
     supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_FRENCH_ROULETTE]),
     supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_AMERICAN_ROULETTE]).
+
+
+

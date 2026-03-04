@@ -10,11 +10,13 @@
 -author("si").
 -include("room.hrl").
 -include("msg.hrl").
+-include("common.hrl").
+-include("dice.hrl").
 -define(INIT_CHIPS, 1000000).
 %% API
 -export([start/2]).
 
--export([start_payout/1]).
+-export([start_payout/1, start_dice/0]).
 
 start(Num, Type) ->
     Zone = case Type of
@@ -44,8 +46,14 @@ start_payout(Type) ->
                end,
     BetInfo = [{Zone, 1} || Zone <- ZoneList],
     case Type of
-        ?GAME_TYPE_BACCARAT_CLASSIC->
+        ?GAME_TYPE_BACCARAT_CLASSIC ->
             game_baccarat_classic:get_current_maximum_loss(BetInfo);
-        ?GAME_TYPE_BACCARAT_LUCKY->
+        ?GAME_TYPE_BACCARAT_LUCKY ->
             game_baccarat_lucky:get_current_maximum_loss(BetInfo)
     end.
+
+start_dice() ->
+    Points = lists:sort([rand:uniform(6) || _ <- lists:seq(1, 3)]),
+    BetInfo = [{{?triple_bet, 3}, 1}, {{?combination_bet, {2, 5}}, 1}, {{?pair_bet, 2}, 1}],
+    ?INFO("-- ~p", [Points]),
+    game_dice:settlement(BetInfo, Points).

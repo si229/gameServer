@@ -1,7 +1,8 @@
 -define(GAME_TYPE_BACCARAT_LUCKY, 1). %% 幸运百家乐
 -define(GAME_TYPE_BACCARAT_CLASSIC, 2). %% 经典百家乐
--define(GAME_TYPE_AMERICAN_ROULETTE,3).
--define(GAME_TYPE_FRENCH_ROULETTE,4).
+-define(GAME_TYPE_AMERICAN_ROULETTE, 3).
+-define(GAME_TYPE_FRENCH_ROULETTE, 4).
+-define(GAME_TYPE_DICE, 5).
 
 
 -record(room_state, {id, play_type, guest_role_list = [], game_type
