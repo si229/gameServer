@@ -14,6 +14,8 @@
 %% API
 -export([start/2]).
 
+-export([start_payout/1]).
+
 start(Num, Type) ->
     Zone = case Type of
                ?GAME_TYPE_BACCARAT_LUCKY -> lists:seq(0, 4);
@@ -32,3 +34,18 @@ start_do(Shoe, RobotList, Num, {Bet, Profit}, Type) ->
     Payout = game_baccarat:payout_calculation(Type, PlayerCards, BankerCards),
     BetList = [{Zone, 1} || {_, _, Zone} <- RobotList],
     start_do(Res, RobotList, Num - 1, {1000 + Bet, Profit + game_baccarat:settlement(BetList, Payout)}, Type).
+
+
+start_payout(Type) ->
+    ZoneList = case Type of
+                   ?GAME_TYPE_BACCARAT_LUCKY -> lists:seq(0, 9);
+                   _ ->
+                       [?banker, ?player, ?tie, ?banker_pair, ?player_pair]
+               end,
+    BetInfo = [{Zone, 1} || Zone <- ZoneList],
+    case Type of
+        ?GAME_TYPE_BACCARAT_CLASSIC->
+            game_baccarat_classic:get_current_maximum_loss(BetInfo);
+        ?GAME_TYPE_BACCARAT_LUCKY->
+            game_baccarat_lucky:get_current_maximum_loss(BetInfo)
+    end.

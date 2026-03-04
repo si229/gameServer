@@ -12,6 +12,12 @@
 %% API
 -export([odds/1, payout_calculation/2]).
 
+-export([draw_plan/0]).
+
+
+-export([get_current_maximum_loss/1]).
+
+
 payout_calculation(PlayerCards, BankerCards) ->
     PlayerPoint = game_baccarat:get_point(PlayerCards),
     BankerPoint = game_baccarat:get_point(BankerCards),
@@ -26,7 +32,7 @@ payout_calculation(PlayerCards, BankerCards) ->
             true ->
                 {true, {Area, Odds}}
         end
-              end, AreaList).
+                    end, AreaList).
 
 check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, BankerCardNum, _PlayerCards, _BankerCards, ?lucky_7) ->
     if BankerPoint > PlayerPoint andalso BankerPoint == 7 ->
@@ -93,8 +99,48 @@ check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _Pla
             -1
     end.
 
-%%幸运百家乐
+get_current_maximum_loss(BetInfo) ->
+    lists:foldl(fun(DrawZone, MaxLoss) ->
+        {NewBetInfo, TotalBetAmount} = wager_expansion(BetInfo, {[], 0}),
+        Loss = compute_payout(NewBetInfo, DrawZone) - TotalBetAmount,
+        if Loss > MaxLoss -> Loss;
+            true -> MaxLoss
+        end end, 0, draw_plan()).
 
+compute_payout(BetInfo, DrawZone) ->
+    lists:foldl(fun(Zone, Amount) ->
+        case proplists:get_value(Zone, BetInfo, -1) of
+            -1 -> Amount;
+            BetAmount ->
+                odds(Zone) * BetAmount + BetAmount + Amount
+        end end, 0, DrawZone).
+
+wager_expansion([], Acc) -> Acc;
+wager_expansion([{?lucky_6, BetAmount} | BetInfo], {Acc, TotalBetAmount}) ->
+    wager_expansion(BetInfo, {[{{?lucky_6, 2}, BetAmount}, {{?lucky_6, 3}, BetAmount} | Acc], TotalBetAmount + BetAmount});
+wager_expansion([{?lucky_7, BetAmount} | BetInfo], {Acc, TotalBetAmount}) ->
+    wager_expansion(BetInfo, {[{{?lucky_7, 2}, BetAmount}, {{?lucky_7, 3}, BetAmount} | Acc], TotalBetAmount + BetAmount});
+wager_expansion([{_, BetAmount} = Bet | BetInfo], {Acc, TotalBetAmount}) ->
+    wager_expansion(BetInfo, {[Bet | Acc], BetAmount + TotalBetAmount}).
+
+draw_plan() ->
+    [
+        [?banker, {?lucky_7, 2}, ?banker_pair, ?player_pair],
+        [?banker, {?lucky_7, 3}, ?super_lucky_7, ?banker_pair, ?player_pair],
+        [{?banker, 6}, {?lucky_6, 2}, ?lucky_6_2, ?banker_pair, ?player_pair],
+        [{?banker, 6}, {?lucky_6, 3}, ?lucky_6_3, ?banker_pair, ?player_pair],
+        [?player, {?lucky_7, 2}, ?banker_pair, ?player_pair],
+        [?player, {?lucky_7, 3}, ?super_lucky_7, ?banker_pair, ?player_pair],
+        [?player, {?lucky_6, 2}, ?lucky_6_2, ?banker_pair, ?player_pair],
+        [?player, {?lucky_6, 3}, ?lucky_6_3, ?banker_pair, ?player_pair],
+        [?tie, ?banker_pair, ?player_pair],
+        [?banker, ?banker_pair, ?player_pair],
+        [?player, ?banker_pair, ?player_pair],
+        [?player],
+        [?banker]
+    ].
+
+%%幸运百家乐
 %%玩家手牌点数为 7 时获胜。<br>• 两张牌组成 7 → 6倍<br>• 三张牌组成 7 → 15倍
 odds({?lucky_7, 2}) -> 6;
 odds({?lucky_7, 3}) -> 15;
@@ -114,4 +160,5 @@ odds(?tie) -> 8;
 odds(?player) -> 1;
 %% 庄家以6点赢佩服 0.5
 odds({?banker, 6}) -> 0.5;
-odds({?banker, _}) -> 1.
+odds({?banker, _}) -> 1;
+odds(?banker) -> 1.

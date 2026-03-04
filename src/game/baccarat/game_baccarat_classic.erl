@@ -12,6 +12,10 @@
 %% API
 -export([odds/1, payout_calculation/2]).
 
+-export([draw_plan/0]).
+
+-export([get_current_maximum_loss/1]).
+
 payout_calculation(PlayerCards, BankerCards) ->
     PlayerPoint = game_baccarat:get_point(PlayerCards),
     BankerPoint = game_baccarat:get_point(BankerCards),
@@ -61,6 +65,32 @@ check_winner_area(PlayerPoint, BankerPoint, _PlayerCardNum, _BankerCardNum, _Pla
         true ->
             -1
     end.
+
+get_current_maximum_loss(BetInfo) ->
+    TotalBetAmount = lists:sum([BetAmount || {_, BetAmount} <- BetInfo]),
+    lists:foldl(fun(DrawZone, MaxLoss) ->
+        Loss = compute_payout(BetInfo, DrawZone) - TotalBetAmount,
+        if Loss > MaxLoss -> Loss;
+            true -> MaxLoss
+        end end, 0, draw_plan()).
+
+compute_payout(BetInfo, DrawZone) ->
+    lists:foldl(fun(Zone, Amount) ->
+        case proplists:get_value(Zone, BetInfo, -1) of
+            -1 -> Amount;
+            BetAmount ->
+                odds(Zone) * BetAmount + BetAmount + Amount
+        end end, 0, DrawZone).
+
+
+draw_plan() ->
+    [
+        [?banker, ?banker_pair, ?player_pair],
+        [?player, ?banker_pair, ?player_pair],
+        [?tie, ?banker_pair, ?player_pair],
+        [?player],
+        [?banker]
+    ].
 
 
 %%只要庄家2张牌6点赢
