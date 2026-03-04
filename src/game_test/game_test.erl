@@ -16,7 +16,7 @@
 
 start(Num, Type) ->
     Zone = case Type of
-               ?GAME_TYPE_LUCKY -> lists:seq(0, 4);
+               ?GAME_TYPE_BACCARAT_LUCKY -> lists:seq(0, 4);
                _ ->
                    [?banker]
            end,

@@ -16,17 +16,15 @@
 
 -export([update_bonus_chips/4, update_real_chips/4]).
 
+
+-export([broadcast/2]).
+
 -define(SERVER, ?MODULE).
 -include("room.hrl").
 -include("msg.hrl").
 -include("common.hrl").
 -define(ROOM_PID(ID), {room_pid, ID}).
 
--record(state, {id, play_type, guest_role_list = [], game_type
-    , normal_role_list = [], loop_timer_ref, phase_state
-    , deck = [], player_cards, banker_cards, hash_value
-    , deal_info, bet_info = []
-}).
 
 -define(LOOP_TIMER(), erlang:start_timer(500, self(), loop_timer)).
 
@@ -69,12 +67,13 @@ init([Type, GameType]) ->
     case catch gproc:add_local_name(?ROOM_PID({Type, GameType})) of
         true ->
             erlang:process_flag(trap_exit, true),
-            {ok, #state{play_type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType}};
+            RoomMod = room_mod(Type,GameType),
+            {ok, #room_state{play_type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType, room_mod = RoomMod}};
         _ ->
             {stop, normal}
     end.
 
-handle_call(Request, From, State = #state{}) ->
+handle_call(Request, From, State = #room_state{}) ->
     try
         handle_call_do(Request, From, State)
     catch
@@ -83,7 +82,7 @@ handle_call(Request, From, State = #state{}) ->
             {reply, error, State}
     end.
 
-handle_cast(Request, State = #state{}) ->
+handle_cast(Request, State = #room_state{}) ->
     try
         handle_cast_do(Request, State)
     catch
@@ -92,7 +91,7 @@ handle_cast(Request, State = #state{}) ->
             {noreply, State}
     end.
 
-handle_info(Request, State = #state{}) ->
+handle_info(Request, State = #room_state{}) ->
     try
         handle_info_do(Request, State)
     catch
@@ -101,19 +100,27 @@ handle_info(Request, State = #state{}) ->
             {noreply, State}
     end.
 
+room_mod(_PlayType,?GAME_TYPE_BACCARAT_LUCKY)->
+    room_baccarat;
+room_mod(_PlayType,?GAME_TYPE_BACCARAT_CLASSIC)->
+    room_baccarat;
+room_mod(_PlayType,?GAME_TYPE_AMERICAN_ROULETTE)->
+    room_roulette;
+room_mod(_PlayType,?GAME_TYPE_FRENCH_ROULETTE)->
+    room_roulette.
 
 handle_call_do({enter, #room_role{account = Account, pid = Pid} = R}, _From
-    , State = #state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
+    , State = #room_state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
     NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
                            {value, #room_role{} = Role, LGuestRoleList} ->
                                [Role#room_role{pid = Pid} | LGuestRoleList];
                            _ ->
                                [R | GuestRoleList]
                        end,
-    {reply, ok, State#state{guest_role_list = NewGuestRoleList}};
+    {reply, ok, State#room_state{guest_role_list = NewGuestRoleList}};
 
 handle_call_do({enter, #room_role{account = Account, pid = Pid} = R}, _From
-    , State = #state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
+    , State = #room_state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
     NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
                            {value, #room_role{} = GRole, LGuestRoleList} ->
                                [GRole#room_role{pid = Pid} | LGuestRoleList];
@@ -126,16 +133,16 @@ handle_call_do({enter, #room_role{account = Account, pid = Pid} = R}, _From
                             _ ->
                                 [R | NormalRoleList]
                         end,
-    {reply, ok, State#state{guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}};
+    {reply, ok, State#room_state{guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}};
 
 
 handle_call_do({leave, Account}, _From
-    , State = #state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
+    , State = #room_state{guest_role_list = GuestRoleList, normal_role_list = NormalRoleList}) ->
     case lists:keytake(Account, #room_role.account, NormalRoleList) of
         {value, #room_role{bet_info = BetInfo}, LNormalRoleList} when BetInfo =/= [] ->
             {reply, fail, State};
         {value, #room_role{bet_info = BetInfo}, LNormalRoleList} ->
-            {reply, ok, State#state{
+            {reply, ok, State#room_state{
                 guest_role_list = lists:keydelete(Account, #room_role.account, GuestRoleList)
                 , normal_role_list = LNormalRoleList}};
         _ ->
@@ -144,7 +151,7 @@ handle_call_do({leave, Account}, _From
 
 
 handle_call_do({bet, {Account, ?GUEST, Zone, Amount}}, _From
-    , State = #state{guest_role_list = GuestRoleList,bet_info = RoomBetInfo}) ->
+    , State = #room_state{guest_role_list = GuestRoleList,bet_info = RoomBetInfo}) ->
     case lists:keytake(Account, #room_role.account, GuestRoleList) of
         {value, #room_role{bet_info = BetInfo} = Role, LGuestRoleList} ->
             NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
@@ -160,7 +167,7 @@ handle_call_do({bet, {Account, ?GUEST, Zone, Amount}}, _From
                         Pid ! {send, Msg}
                 end
                           end, GuestRoleList),
-            {reply, ok, State#state{
+            {reply, ok, State#room_state{
                 guest_role_list = [Role#room_role{bet_info = NewBetInfo} | LGuestRoleList],
                 bet_info = NewRoomBetInfo
             }};
@@ -169,7 +176,7 @@ handle_call_do({bet, {Account, ?GUEST, Zone, Amount}}, _From
     end;
 
 handle_call_do({bet, {Account, _, Zone, Amount}}, _From
-    , State = #state{normal_role_list = NormalRoleList}) ->
+    , State = #room_state{normal_role_list = NormalRoleList}) ->
     case lists:keytake(Account, #room_role.account, NormalRoleList) of
         {value, #room_role{bet_info = BetInfo} = Role, LNormalRoleList} ->
             NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
@@ -183,16 +190,16 @@ handle_call_do({bet, {Account, _, Zone, Amount}}, _From
                         Pid ! {send, Msg}
                 end
                           end, NormalRoleList),
-            {reply, ok, State#state{normal_role_list = [Role#room_role{bet_info = NewBetInfo} | LNormalRoleList]}};
+            {reply, ok, State#room_state{normal_role_list = [Role#room_role{bet_info = NewBetInfo} | LNormalRoleList]}};
         _ ->
             {reply, ok, State}
     end;
 
-handle_call_do(_Request, _From, State = #state{}) ->
+handle_call_do(_Request, _From, State = #room_state{}) ->
     {reply, ok, State}.
 
 
-handle_cast_do({update_real_chips, #room_role{real_money = RealMoney, account = Account}}, State = #state{
+handle_cast_do({update_real_chips, #room_role{real_money = RealMoney, account = Account}}, State = #room_state{
     normal_role_list = NormalRoleList}) ->
     NewNormalRoleList = case lists:keytake(Account, #room_role.account, NormalRoleList) of
                             {value, #room_role{} = Role, LNormalRoleList} ->
@@ -200,138 +207,53 @@ handle_cast_do({update_real_chips, #room_role{real_money = RealMoney, account = 
                             _ ->
                                 NormalRoleList
                         end,
-    {noreply, State#state{normal_role_list = NewNormalRoleList}};
+    {noreply, State#room_state{normal_role_list = NewNormalRoleList}};
 handle_cast_do({update_bonus_chips, #room_role{bonus_credits = BonusCredits, account = Account}}
-    , State = #state{guest_role_list = GuestRoleList}) ->
+    , State = #room_state{guest_role_list = GuestRoleList}) ->
     NewGuestRoleList = case lists:keytake(Account, #room_role.account, GuestRoleList) of
                            {value, #room_role{} = Role, LGuestRoleList} ->
                                [Role#room_role{bonus_credits = BonusCredits} | LGuestRoleList];
                            _ ->
                                GuestRoleList
                        end,
-    {noreply, State#state{guest_role_list = NewGuestRoleList}};
-handle_cast_do(_Request, State = #state{}) ->
+    {noreply, State#room_state{guest_role_list = NewGuestRoleList}};
+handle_cast_do(_Request, State = #room_state{}) ->
     {noreply, State}.
 
-handle_info_do({timeout, Ref, loop_timer}, State = #state{loop_timer_ref = Ref}) ->
+handle_info_do({timeout, Ref, loop_timer}, State = #room_state{loop_timer_ref = Ref}) ->
     NewState = handle_loop(State),
-    {noreply, NewState#state{loop_timer_ref = ?LOOP_TIMER()}};
-handle_info_do(_Info, State = #state{}) ->
+    {noreply, NewState#room_state{loop_timer_ref = ?LOOP_TIMER()}};
+handle_info_do(_Info, State = #room_state{}) ->
     {noreply, State}.
 
-terminate(_Reason, _State = #state{}) ->
+terminate(_Reason, _State = #room_state{}) ->
     ok.
 
-code_change(_OldVsn, State = #state{}, _Extra) ->
+code_change(_OldVsn, State = #room_state{}, _Extra) ->
     {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_loop(#state{phase_state = undefined} = State) ->
-    {Phase, CutOffTime} = hd(phase_info()),
-    handle_state(Phase, CutOffTime, State);
-handle_loop(#state{phase_state = {Phase, CutOffTime}} = State) ->
+handle_loop(#room_state{phase_state = undefined,room_mod = RoomMod} = State) ->
+    {Phase, CutOffTime} = hd(RoomMod:phase_info()),
+    RoomMod:handle_state(Phase, CutOffTime, State);
+handle_loop(#room_state{phase_state = {Phase, CutOffTime,room_mod = RoomMod}} = State) ->
     Now = ?MILLI_TIMESTAMP,
     if CutOffTime =< Now ->
-        {NewPhase, NewCutOffTime} = next_state(Phase),
-        handle_state(NewPhase, NewCutOffTime, State);
+        {NewPhase, NewCutOffTime} = RoomMod:next_state(Phase),
+        RoomMod:handle_state(NewPhase, NewCutOffTime, State);
         true ->
             State
     end.
 
-handle_state(?preparation, CutOffTime, #state{deck = Deck} = State) ->
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    case game_baccarat:try_reshuffle_the_shoe(Deck) of
-        {true, NewDeck} ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, true),
-            broadcast(Msg, State),
-            State#state{phase_state = {?preparation, DTime}, deck = NewDeck};
-        _ ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, false),
-            broadcast(Msg, State),
-            State#state{phase_state = {?preparation, DTime}}
-    end;
 
 
-handle_state(?dealing, CutOffTime, #state{deck = Deck, play_type = ?GUEST} = State) ->
-    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
-    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
-    DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
-        , random_str => RandomStr, card_str => CardStr},
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Msg = game_proto_util:phase_change_push(?dealing, DTime, false, DealInfo, none),
-    broadcast(Msg, State),
-    State#state{phase_state = {?dealing, DTime}, deck = NewDeck, deal_info = DealInfo
-        , player_cards = PlayerCards, banker_cards = BankerCards};
-
-handle_state(?dealing, CutOffTime, #state{deck = Deck} = State) ->
-    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
-    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
-    DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
-        , random_str => RandomStr, card_str => CardStr},
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Msg = game_proto_util:phase_change_push(?dealing, DTime, false, #{hash_value => HashValue}, none),
-    broadcast(Msg, State),
-    State#state{phase_state = {?dealing, DTime}, deck = NewDeck, deal_info = DealInfo
-        , player_cards = PlayerCards, banker_cards = BankerCards};
-
-
-handle_state(?betting, CutOffTime, #state{} = State) ->
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Msg = game_proto_util:phase_change_push(?betting, DTime, false),
-    broadcast(Msg, State),
-    State#state{phase_state = {?betting, DTime}};
-
-
-handle_state(?settlement, CutOffTime, #state{deal_info = DealInfo,
-    player_cards = PlayerCards, banker_cards = BankerCards
-    , guest_role_list = GuestRoleList, play_type = PlayType,
-    normal_role_list = NormalRoleList, game_type = GameType
-} = State) ->
-    DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Payout = game_baccarat:payout_calculation(GameType, PlayerCards, BankerCards),
-    NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
-        Profit = game_baccarat:settlement(BetInfo, Payout),
-        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
-        Pid ! {settle, Msg, {?GUEST, Profit}},
-        Role#room_role{bonus_credits = Chips + Profit}
-                                 end, GuestRoleList),
-
-    NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, real_money = Chips, pid = Pid} = Role) ->
-        Profit = game_baccarat:settlement(BetInfo, Payout),
-        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
-        Pid ! {settle, Msg, {?NORMAL, Profit}},
-        Role#room_role{real_money = Chips + Profit}
-                                  end, NormalRoleList),
-
-    game_server_room:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
-
-    State#state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
-
-
-phase_info() ->
-    [{?preparation, 2000}, {?dealing, 1000}, {?betting, 15000}, {?settlement, 500}].
-
-
-next_state(?settlement) ->
-    PhaseInfo = phase_info(),
-    {?preparation, proplists:get_value(?preparation, PhaseInfo)};
-
-
-next_state(Phase) ->
-    PhaseInfo = phase_info(),
-    next_state(Phase, PhaseInfo).
-
-next_state(Phase, [{Phase, _}, Next | _]) -> Next;
-next_state(Phase, [_ | Next]) -> next_state(Phase, Next).
-
-
-broadcast(Msg, #state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
+broadcast(Msg, #room_state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
     lists:foreach(fun(#room_role{pid = Pid}) ->
         Pid ! {send, Msg}
                   end, GuestRoleList);
-broadcast(Msg, #state{normal_role_list = NormalRoleList}) ->
+broadcast(Msg, #room_state{normal_role_list = NormalRoleList}) ->
     lists:foreach(fun(#room_role{pid = Pid}) ->
         Pid ! {send, Msg}
                   end, NormalRoleList).

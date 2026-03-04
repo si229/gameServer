@@ -27,10 +27,10 @@ init_shoe() ->
 %%    Shoe.
 
 init() ->
-    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_LUCKY]),
-    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_CLASSIC]),
-    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_LUCKY]),
-    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_CLASSIC]).
+    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_BACCARAT_LUCKY]),
+    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_BACCARAT_CLASSIC]),
+    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_BACCARAT_LUCKY]),
+    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_BACCARAT_CLASSIC]).
 
 try_reshuffle_the_shoe(Deck) ->
     case length(Deck) =< ?SHOE_MIN_NUM of
@@ -163,8 +163,8 @@ settlement(BetList, Payout) ->
         Amount * Odds + Amount + Acc
         end, 0, BetList).
 
-payout_calculation(?GAME_TYPE_CLASSIC, PlayerCards, BankerCards) ->
+payout_calculation(?GAME_TYPE_BACCARAT_CLASSIC, PlayerCards, BankerCards) ->
     game_baccarat_classic:payout_calculation(PlayerCards, BankerCards);
-payout_calculation(?GAME_TYPE_LUCKY, PlayerCards, BankerCards) ->
+payout_calculation(?GAME_TYPE_BACCARAT_LUCKY, PlayerCards, BankerCards) ->
     game_baccarat_lucky:payout_calculation(PlayerCards, BankerCards).
 

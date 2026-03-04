@@ -69,7 +69,7 @@ roads() ->
             #{play_type => PlayType, game_type => game_type, data => Roads}
         end
         ||
-        PlayType <- [?GUEST, ?NORMAL], GameType <- [?GAME_TYPE_LUCKY, ?GAME_TYPE_CLASSIC]],
+        PlayType <- [?GUEST, ?NORMAL], GameType <- [?GAME_TYPE_BACCARAT_LUCKY, ?GAME_TYPE_BACCARAT_CLASSIC]],
     Msg = #{msg_id => roads_resp, data => Values},
     jsx:encode(Msg).
 
