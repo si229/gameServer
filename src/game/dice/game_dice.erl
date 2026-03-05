@@ -16,14 +16,24 @@
 -export([init/0]).
 -export([payout_calculation/1]).
 
--export([settlement/2]).
+-export([settlement/2, deal/0,gen_hash/1]).
 
 init() ->
-    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_AMERICAN_ROULETTE]),
-    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_FRENCH_ROULETTE]),
-    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_FRENCH_ROULETTE]),
-    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_AMERICAN_ROULETTE]).
+    supervisor:start_child(room_sup, [?GUEST, ?GAME_TYPE_DICE]),
+    supervisor:start_child(room_sup, [?NORMAL, ?GAME_TYPE_DICE]).
 
+deal() ->
+    lists:sort([rand:uniform(6) || _ <- lists:seq(1, 3)]).
+
+gen_hash(Points) ->
+    RandomStr = game_util:random_string(),
+    Timestamp = erlang:system_time(1000),
+    Str = lists:flatten([integer_to_list(X) || X <- Points]),
+    S = io_lib:format("~p~s~s", [Timestamp, RandomStr, Str]),
+    L = list_to_binary(
+        S
+    ),
+    {game_util:sha256_hex(L), L, Timestamp, RandomStr, Str}.
 
 settlement(BetList, Points) ->
     Payout = payout_calculation(Points),
@@ -118,7 +128,7 @@ check_winner_area([?pair_bet | BettingArea], [_, P, P] = Points) ->
     [{{?pair_bet, P}, odds(?pair_bet)} | check_winner_area(BettingArea, Points)];
 check_winner_area([?pair_bet | BettingArea], [P, P, _] = Points) ->
     [{{?pair_bet, P}, odds(?pair_bet)} | check_winner_area(BettingArea, Points)];
-check_winner_area([?pair_bet | BettingArea],  Points) ->
+check_winner_area([?pair_bet | BettingArea], Points) ->
     check_winner_area(BettingArea, Points);
 check_winner_area([?triple_bet | BettingArea], [P, P, P] = Points) ->
     [{{?triple_bet, P}, odds(?triple_bet)} | check_winner_area(BettingArea, Points)];

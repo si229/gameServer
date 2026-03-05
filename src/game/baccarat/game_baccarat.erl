@@ -113,7 +113,7 @@ get_point(CardList) ->
 
 
 gen_hash(PlayerCards, BankerCards) ->
-    RandomStr = random_string(),
+    RandomStr = game_util:random_string(),
     Cards = PlayerCards ++ BankerCards,
     Points = [P || {P, _} <- Cards],
     Colors = [C || {_, C} <- Cards],
@@ -138,23 +138,8 @@ gen_hash(PlayerCards, BankerCards) ->
     L = list_to_binary(
         S
     ),
-    {sha256_hex(L), L, Timestamp, RandomStr, Str}.
+    {game_util:sha256_hex(L), L, Timestamp, RandomStr, Str}.
 
-
-random_string() ->
-    Len = 8,
-    Charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-    Bytes = crypto:strong_rand_bytes(Len),
-    list_to_binary(
-        [lists:nth((X rem length(Charset)) + 1, Charset) || <<X>> <= Bytes]
-    ).
-
-sha256_hex(InputBin) ->
-    Hash = sha256(InputBin),
-    lists:flatten([io_lib:format("~2.16.0B", [X]) || <<X>> <= Hash]).
-
-sha256(InputBin) ->
-    crypto:hash(sha256, InputBin).
 
 
 settlement(BetList, Payout) ->

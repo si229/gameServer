@@ -5,10 +5,15 @@
 -define(GAME_TYPE_DICE, 5).
 
 
--record(room_state, {id, play_type, guest_role_list = [], game_type
-    , normal_role_list = [], loop_timer_ref, phase_state
-    , deck = [], player_cards, banker_cards, hash_value
-    , deal_info, bet_info = [], room_mod
+%%-record(room_state, {id, play_type, guest_role_list = [], game_type
+%%    , normal_role_list = [], loop_timer_ref, phase_state
+%%    , deck = [], player_cards, banker_cards, hash_value
+%%    , deal_info, bet_info = [], room_mod
+%%}).
+
+
+-record(room_state, {id, play_type, game_type, guest_role_list = []
+    , normal_role_list = [], loop_timer_ref, phase_state,game_state, room_mod
 }).
 
 

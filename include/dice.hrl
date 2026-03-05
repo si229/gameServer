@@ -9,3 +9,8 @@
 -define(any_triple_bet, 7).
 -define(odd_bet, 8).  %% 单
 -define(even_bet, 9). %% 双
+
+
+-record(game_state, {
+    points=[], hash_value, deal_info, bet_info = []
+}).

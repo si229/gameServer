@@ -54,6 +54,6 @@ start_payout(Type) ->
 
 start_dice() ->
     Points = lists:sort([rand:uniform(6) || _ <- lists:seq(1, 3)]),
-    BetInfo = [{{?triple_bet, 3}, 1}, {{?combination_bet, {2, 5}}, 1}, {{?pair_bet, 2}, 1}],
+    BetInfo = [{{?triple_bet, 3}, 1},{?any_triple_bet, 1},{{?single_number_bet,3}, 1},{{?combination_bet, {2, 5}}, 1}, {{?pair_bet, 2}, 1}],
     ?INFO("-- ~p", [Points]),
     game_dice:settlement(BetInfo, Points).

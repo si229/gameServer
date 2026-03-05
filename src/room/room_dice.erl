@@ -6,56 +6,44 @@
 %%% @end
 %%% Created : 04. 3月 2026 14:24
 %%%-------------------------------------------------------------------
--module(room_baccarat).
+-module(room_dice).
 -author("nm_jok").
 -include("msg.hrl").
 -include("common.hrl").
--include("baccarat.hrl").
 -include("room.hrl").
+-include("dice.hrl").
 %% API
 -export([handle_state/3]).
--export([phase_info/0, next_state/1, next_state/2]).
+-export([phase_info/0,next_state/1,next_state/2]).
 
 
-handle_state(?preparation, CutOffTime, #room_state{game_state = #game_state{deck = Deck} = GameState} = State) ->
+handle_state(?preparation, CutOffTime, #room_state{} = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    case game_baccarat:try_reshuffle_the_shoe(Deck) of
-        {true, NewDeck} ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, true),
-            room_srv:broadcast(Msg, State),
-            State#room_state{phase_state = {?preparation, DTime}, game_state = GameState#game_state{deck = NewDeck}};
-        _ ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, false),
-            room_srv:broadcast(Msg, State),
-            State#room_state{phase_state = {?preparation, DTime}}
-    end;
+    Msg = game_proto_util:phase_change_push(?preparation, DTime, false),
+    room_srv:broadcast(Msg, State),
+    State#room_state{phase_state = {?preparation, DTime}};
 
-
-handle_state(?dealing, CutOffTime, #room_state{
-    game_state = #game_state{deck = Deck} = GameState
-    , play_type = ?GUEST} = State) ->
-    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
-    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
+handle_state(?dealing, CutOffTime, #room_state{ play_type = ?GUEST} = State) ->
+    Points = game_dice:deal(),
+    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_dice:gen_hash(Points),
     DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
         , random_str => RandomStr, card_str => CardStr},
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Msg = game_proto_util:phase_change_push(?dealing, DTime, false, DealInfo, none),
     room_srv:broadcast(Msg, State),
-    NewGameState = GameState#game_state{deck = NewDeck, deal_info = DealInfo
-        , player_cards = PlayerCards, banker_cards = BankerCards },
-    State#room_state{phase_state = {?dealing, DTime},game_state = NewGameState};
+    GameState = #game_state{points = Points,deal_info = DealInfo},
+    State#room_state{phase_state = {?dealing, DTime}, game_state = GameState};
 
-handle_state(?dealing, CutOffTime, #room_state{  game_state = #game_state{deck = Deck} = GameState} = State) ->
-    {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
-    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
+handle_state(?dealing, CutOffTime, #room_state{} = State) ->
+    Points = game_dice:deal(),
+    {HashValue, Str, Timestamp, RandomStr, CardStr} = game_dice:gen_hash(Points),
     DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
         , random_str => RandomStr, card_str => CardStr},
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Msg = game_proto_util:phase_change_push(?dealing, DTime, false, #{hash_value => HashValue}, none),
     room_srv:broadcast(Msg, State),
-    NewGameState = GameState#game_state{deck = NewDeck, deal_info = DealInfo
-        , player_cards = PlayerCards, banker_cards = BankerCards },
-    State#room_state{phase_state = {?dealing, DTime}, game_state = NewGameState};
+    GameState = #game_state{points = Points,deal_info = DealInfo},
+    State#room_state{phase_state = {?dealing, DTime},game_state = GameState};
 
 
 handle_state(?betting, CutOffTime, #room_state{} = State) ->
@@ -65,8 +53,7 @@ handle_state(?betting, CutOffTime, #room_state{} = State) ->
     State#room_state{phase_state = {?betting, DTime}};
 
 
-handle_state(?settlement, CutOffTime, #room_state{game_state =
-    #game_state{deal_info = DealInfo, player_cards = PlayerCards, banker_cards = BankerCards}
+handle_state(?settlement, CutOffTime, #room_state{game_state = GameState
     , guest_role_list = GuestRoleList, play_type = PlayType,
     normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
