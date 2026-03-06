@@ -53,27 +53,28 @@ handle_state(?betting, CutOffTime, #room_state{} = State) ->
     State#room_state{phase_state = {?betting, DTime}};
 
 
-handle_state(?settlement, CutOffTime, #room_state{game_state = GameState
+handle_state(?settlement, CutOffTime, #room_state{
+    game_state = #game_state{points = Points,deal_info = DealInfo}
     , guest_role_list = GuestRoleList, play_type = PlayType,
     normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
-    Payout = game_baccarat:payout_calculation(GameType, PlayerCards, BankerCards),
+    Payout = game_dice:payout_calculation(Points),
     NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
-        Profit = game_baccarat:settlement(BetInfo, Payout),
+        Profit = game_dice:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
         Pid ! {settle, Msg, {?GUEST, Profit}},
         Role#room_role{bonus_credits = Chips + Profit}
                                  end, GuestRoleList),
 
     NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, real_money = Chips, pid = Pid} = Role) ->
-        Profit = game_baccarat:settlement(BetInfo, Payout),
+        Profit = game_dice:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
         Pid ! {settle, Msg, {?NORMAL, Profit}},
         Role#room_role{real_money = Chips + Profit}
                                   end, NormalRoleList),
 
-    room_road:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
+    room_road:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], Points}),
 
     State#room_state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
 
