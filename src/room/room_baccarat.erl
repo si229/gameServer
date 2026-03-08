@@ -15,7 +15,13 @@
 %% API
 -export([handle_state/3]).
 -export([phase_info/0, next_state/1, next_state/2]).
+-export([handle_message/2]).
 
+-export([init/1]).
+
+
+init(#room_state{} = State)->
+    State#room_state{game_state = #game_state{}}.
 
 handle_state(?preparation, CutOffTime, #room_state{game_state = #game_state{deck = Deck} = GameState} = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
@@ -89,6 +95,57 @@ handle_state(?settlement, CutOffTime, #room_state{game_state =
     room_road:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
 
     State#room_state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
+
+handle_message({bet, {Account, ?GUEST, Zone, Amount}}
+    , State = #room_state{guest_role_list = GuestRoleList
+        ,game_state = #game_state{bet_info = RoomBetInfo} = GameState
+        }) ->
+    case lists:keytake(Account, #room_role.account, GuestRoleList) of
+        {value, #room_role{bet_info = BetInfo} = Role, LGuestRoleList} ->
+            NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
+            NewRoomBetAmount = proplists:get_value(Zone, RoomBetInfo, 0) + Amount,
+            NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
+            NewRoomBetInfo = lists:keystore(Zone, 1, RoomBetInfo, {Zone, NewRoomBetAmount}),
+            SMsg = game_proto_util:bet(BetInfo,NewRoomBetInfo, ?ok),
+            lists:foreach(fun(#room_role{pid = Pid, account = A,bet_info = RoleBetInfo}) ->
+                Msg = game_proto_util:bet(RoleBetInfo, NewRoomBetInfo, ?ok),
+                if A == Account ->
+                    Pid ! {send, SMsg};
+                    true ->
+                        Pid ! {send, Msg}
+                end
+                          end, GuestRoleList),
+            {reply, ok, State#room_state{
+                guest_role_list = [Role#room_role{bet_info = NewBetInfo} | LGuestRoleList],
+                game_state = GameState#game_state{bet_info = NewRoomBetInfo}
+            }};
+        _ ->
+            {reply, ok, State}
+    end;
+
+handle_message({bet, {Account, _, Zone, Amount}}
+    , State = #room_state{normal_role_list = NormalRoleList}) ->
+    case lists:keytake(Account, #room_role.account, NormalRoleList) of
+        {value, #room_role{bet_info = BetInfo} = Role, LNormalRoleList} ->
+            NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
+            NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
+            SMsg = game_proto_util:bet(true, Amount, ?ok),
+            Msg = game_proto_util:bet(false, Amount, ?ok),
+            lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
+                if A == Account ->
+                    Pid ! {send, SMsg};
+                    true ->
+                        Pid ! {send, Msg}
+                end
+                          end, NormalRoleList),
+            {reply, ok, State#room_state{
+                normal_role_list = [Role#room_role{bet_info = NewBetInfo} | LNormalRoleList]}};
+        _ ->
+            {reply, ok, State}
+    end;
+
+
+handle_message(_Msg,State)->   {reply, ok, State}.
 
 
 phase_info() ->

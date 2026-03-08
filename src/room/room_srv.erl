@@ -67,8 +67,10 @@ init([Type, GameType]) ->
     case catch gproc:add_local_name(?ROOM_PID({Type, GameType})) of
         true ->
             erlang:process_flag(trap_exit, true),
-            RoomMod = room_mod(Type,GameType),
-            {ok, #room_state{play_type = Type, loop_timer_ref = ?LOOP_TIMER(), game_type = GameType, room_mod = RoomMod}};
+            RoomMod = room_mod(Type, GameType),
+            RoomState = #room_state{play_type = Type, loop_timer_ref = ?LOOP_TIMER()
+                , game_type = GameType, room_mod = RoomMod},
+            {ok, RoomMod:init(RoomState)};
         _ ->
             {stop, normal}
     end.
@@ -100,14 +102,16 @@ handle_info(Request, State = #room_state{}) ->
             {noreply, State}
     end.
 
-room_mod(_PlayType,?GAME_TYPE_BACCARAT_LUCKY)->
+room_mod(_PlayType, ?GAME_TYPE_BACCARAT_LUCKY) ->
     room_baccarat;
-room_mod(_PlayType,?GAME_TYPE_BACCARAT_CLASSIC)->
+room_mod(_PlayType, ?GAME_TYPE_BACCARAT_CLASSIC) ->
     room_baccarat;
-room_mod(_PlayType,?GAME_TYPE_AMERICAN_ROULETTE)->
+room_mod(_PlayType, ?GAME_TYPE_AMERICAN_ROULETTE) ->
     room_roulette;
-room_mod(_PlayType,?GAME_TYPE_FRENCH_ROULETTE)->
-    room_roulette.
+room_mod(_PlayType, ?GAME_TYPE_FRENCH_ROULETTE) ->
+    room_roulette;
+room_mod(_PlayType, ?GAME_TYPE_DICE) ->
+    room_dice.
 
 handle_call_do({enter, #room_role{account = Account, pid = Pid} = R}, _From
     , State = #room_state{play_type = ?GUEST, guest_role_list = GuestRoleList}) ->
@@ -150,50 +154,9 @@ handle_call_do({leave, Account}, _From
     end;
 
 
-handle_call_do({bet, {Account, ?GUEST, Zone, Amount}}, _From
-    , State = #room_state{guest_role_list = GuestRoleList,bet_info = RoomBetInfo}) ->
-    case lists:keytake(Account, #room_role.account, GuestRoleList) of
-        {value, #room_role{bet_info = BetInfo} = Role, LGuestRoleList} ->
-            NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
-            NewRoomBetAmount = proplists:get_value(Zone, RoomBetInfo, 0) + Amount,
-            NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
-            NewRoomBetInfo = lists:keystore(Zone, 1, RoomBetInfo, {Zone, NewRoomBetAmount}),
-            SMsg = game_proto_util:bet(BetInfo,NewRoomBetInfo, ?ok),
-            lists:foreach(fun(#room_role{pid = Pid, account = A,bet_info = RoleBetInfo}) ->
-                Msg = game_proto_util:bet(RoleBetInfo, NewRoomBetInfo, ?ok),
-                if A == Account ->
-                    Pid ! {send, SMsg};
-                    true ->
-                        Pid ! {send, Msg}
-                end
-                          end, GuestRoleList),
-            {reply, ok, State#room_state{
-                guest_role_list = [Role#room_role{bet_info = NewBetInfo} | LGuestRoleList],
-                bet_info = NewRoomBetInfo
-            }};
-        _ ->
-            {reply, ok, State}
-    end;
-
-handle_call_do({bet, {Account, _, Zone, Amount}}, _From
-    , State = #room_state{normal_role_list = NormalRoleList}) ->
-    case lists:keytake(Account, #room_role.account, NormalRoleList) of
-        {value, #room_role{bet_info = BetInfo} = Role, LNormalRoleList} ->
-            NewBetAmount = proplists:get_value(Zone, BetInfo, 0) + Amount,
-            NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
-            SMsg = game_proto_util:bet(true, Amount, ?ok),
-            Msg = game_proto_util:bet(false, Amount, ?ok),
-            lists:foreach(fun(#room_role{pid = Pid, account = A}) ->
-                if A == Account ->
-                    Pid ! {send, SMsg};
-                    true ->
-                        Pid ! {send, Msg}
-                end
-                          end, NormalRoleList),
-            {reply, ok, State#room_state{normal_role_list = [Role#room_role{bet_info = NewBetInfo} | LNormalRoleList]}};
-        _ ->
-            {reply, ok, State}
-    end;
+handle_call_do({bet, _} = Msg, _From
+    , State = #room_state{room_mod = RoomMod}) ->
+    RoomMod:handle_message(Msg, State);
 
 handle_call_do(_Request, _From, State = #room_state{}) ->
     {reply, ok, State}.
@@ -235,10 +198,10 @@ code_change(_OldVsn, State = #room_state{}, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-handle_loop(#room_state{phase_state = undefined,room_mod = RoomMod} = State) ->
+handle_loop(#room_state{phase_state = undefined, room_mod = RoomMod} = State) ->
     {Phase, CutOffTime} = hd(RoomMod:phase_info()),
     RoomMod:handle_state(Phase, CutOffTime, State);
-handle_loop(#room_state{phase_state = {Phase, CutOffTime},room_mod = RoomMod} = State) ->
+handle_loop(#room_state{phase_state = {Phase, CutOffTime}, room_mod = RoomMod} = State) ->
     Now = ?MILLI_TIMESTAMP,
     if CutOffTime =< Now ->
         {NewPhase, NewCutOffTime} = RoomMod:next_state(Phase),
