@@ -126,10 +126,11 @@
 -record(bet_push,
 {
     is_self,        %% 是否是自己
-    amount,          % 当前下注金额
+    amount,          %% 当前下注金额
+    zone,            %% 区域
     all_role_amount,  %% 当前区域玩家所有下注
     all_room_amount,  %% 当前区域所有玩家下注金额
-    code
+    code              %% -1 失败 0 成功
 }).
 
 

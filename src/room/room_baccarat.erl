@@ -108,13 +108,13 @@ handle_message({bet, {Account, ?GUEST, Zone, Amount}}
             NewRoomBetAmount = proplists:get_value(Zone, RoomBetInfo, 0) + Amount,
             NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
             NewRoomBetInfo = lists:keystore(Zone, 1, RoomBetInfo, {Zone, NewRoomBetAmount}),
-            lists:foreach(fun(#room_role{pid = Pid, account = A,bet_info = RoleBetInfo}) ->
+            lists:foreach(fun(#room_role{pid = Pid, account = A, bet_info = RoleBetInfo}) ->
                 if A =/= Account ->
-                    RBetAmount = proplists:get_value(Zone, RoleBetInfo, 0) ,
-                    SMsg = game_proto_util:bet(false, Amount, RBetAmount, NewRoomBetAmount, ?ok),
+                    RBetAmount = proplists:get_value(Zone, RoleBetInfo, 0),
+                    SMsg = game_proto_util:bet(false, Amount, Zone, RBetAmount, NewRoomBetAmount, ?ok),
                     Pid ! {send, SMsg};
                     true ->
-                        Msg = game_proto_util:bet(true, Amount, NewBetAmount, NewRoomBetAmount, ?ok),
+                        Msg = game_proto_util:bet(true, Amount, Zone, NewBetAmount, NewRoomBetAmount, ?ok),
                         Pid ! {send, Msg}
                 end
                           end, GuestRoleList),
@@ -136,13 +136,13 @@ handle_message({bet, {Account, ?NORMAL, Zone, Amount}}
             NewRoomBetAmount = proplists:get_value(Zone, RoomBetInfo, 0) + Amount,
             NewBetInfo = lists:keystore(Zone, 1, BetInfo, {Zone, NewBetAmount}),
             NewRoomBetInfo = lists:keystore(Zone, 1, RoomBetInfo, {Zone, NewRoomBetAmount}),
-            lists:foreach(fun(#room_role{pid = Pid, account = A,bet_info = RoleBetInfo}) ->
+            lists:foreach(fun(#room_role{pid = Pid, account = A, bet_info = RoleBetInfo}) ->
                 if A =/= Account ->
-                    RBetAmount = proplists:get_value(Zone, RoleBetInfo, 0) ,
-                    SMsg = game_proto_util:bet(false, Amount, RBetAmount, NewRoomBetAmount, ?ok),
+                    RBetAmount = proplists:get_value(Zone, RoleBetInfo, 0),
+                    SMsg = game_proto_util:bet(false, Amount, Zone, RBetAmount, NewRoomBetAmount, ?ok),
                     Pid ! {send, SMsg};
                     true ->
-                        Msg = game_proto_util:bet(true, Amount, NewBetAmount, NewRoomBetAmount, ?ok),
+                        Msg = game_proto_util:bet(true, Amount, Zone, NewBetAmount, NewRoomBetAmount, ?ok),
                         Pid ! {send, Msg}
                 end
                           end, NormalRoleList),
