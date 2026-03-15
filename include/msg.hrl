@@ -130,6 +130,15 @@
 }).
 
 
+%% play_type
+%%-define(GUEST,1).
+%%-define(NORMAL,2).
+%% game_type:
+%%-define(GAME_TYPE_BACCARAT_LUCKY, 1). %% 幸运百家乐
+%%-define(GAME_TYPE_BACCARAT_CLASSIC, 2). %% 经典百家乐
+%%-define(GAME_TYPE_AMERICAN_ROULETTE, 3). %% 美式轮盘
+%%-define(GAME_TYPE_FRENCH_ROULETTE, 4).%% 法式轮盘
+%%-define(GAME_TYPE_DICE, 5).%% 骰宝
 -record(enter_room_req, {
     play_type,
     game_type
