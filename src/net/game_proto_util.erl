@@ -22,6 +22,7 @@
     enter_room/1,
     leave_room/1,
     bet/3,
+    bet/5,
     roads/0,
     roads/2
 ]).
@@ -52,9 +53,13 @@ enter_room(Code) ->
 leave_room(Code) ->
     jsx:encode(#{msg_id => leave_room_resp, code => Code}).
 
-
 bet(RoleBetInfo,RoomBetInfo, Code) ->
     jsx:encode(#{msg_id => bet_push, code => Code, role_bet_info=>RoleBetInfo, room_bet_info=>RoomBetInfo}).
+
+bet(IsSelf, Amount, AllRoleAmount, AllRoomAmount, Code) ->
+    jsx:encode(#{msg_id => bet_push, code => Code, is_self => IsSelf
+        , amount => Amount, all_role_amount => AllRoleAmount, all_room_amount => AllRoomAmount}).
+
 
 roads(PlayType, GameType) ->
     Roads = room_road:get_road(PlayType, GameType),

@@ -121,11 +121,14 @@
     zone
 }).
 
+
 %% 下注信息推送
 -record(bet_push,
 {
-    role_bet_info,
-    room_bet_info,
+    is_self,        %% 是否是自己
+    amount,          % 当前下注金额
+    all_role_amount,  %% 当前区域玩家所有下注
+    all_room_amount,  %% 当前区域所有玩家下注金额
     code
 }).
 
