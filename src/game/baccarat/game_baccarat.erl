@@ -14,7 +14,7 @@
 
 -export([gen_hash/2, payout_calculation/3, settlement/2]).
 
--export([try_shuffle_the_shoe/1]).
+-export([try_shuffle_the_shoe/1,result_type/2]).
 
 init_shoe() ->
     Deck = ?DECK,
@@ -146,10 +146,19 @@ settlement(BetList, Payout) ->
     lists:foldl(fun({BetArea, Amount}, Acc) ->
         Odds = proplists:get_value(BetArea, Payout, -1),
         Amount * Odds + Amount + Acc
-        end, 0, BetList).
+                end, 0, BetList).
 
 payout_calculation(?GAME_TYPE_BACCARAT_CLASSIC, PlayerCards, BankerCards) ->
     game_baccarat_classic:payout_calculation(PlayerCards, BankerCards);
 payout_calculation(?GAME_TYPE_BACCARAT_LUCKY, PlayerCards, BankerCards) ->
     game_baccarat_lucky:payout_calculation(PlayerCards, BankerCards).
 
+
+result_type(PlayerCards, BankerCards) ->
+    PlayerPoint = game_baccarat:get_point(PlayerCards),
+    BankerPoint = game_baccarat:get_point(BankerCards),
+    if PlayerPoint == BankerPoint -> ?tie;
+        PlayerPoint > BankerPoint -> ?player;
+        true ->
+            ?banker
+    end.

@@ -25,7 +25,8 @@
     bet/6,
     roads/0,
     roads/2,
-    phase_pre_push/4
+    phase_pre_push/4,
+    phase_settle_push/7
 ]).
 
 login_resp(#user{account = Account, bonus_credits = BonusCredits, real_money = RealMoney}, ReconnectInfo) ->
@@ -109,5 +110,16 @@ phase_change_push(Phase, CutOffTime, ResetTheRoad, DealInfo, Result) ->
         , cut_off_time => CutOffTime
         , deal_info => DealInfo
         , reset_the_road => ResetTheRoad
+        , result => Result
+    }).
+
+
+phase_settle_push(Phase, CutOffTime, ResetTheRoad, DealInfo, WinZones, ResultType, Result) ->
+    jsx:encode(#{msg_id => phase_change_push, phase => Phase
+        , cut_off_time => CutOffTime
+        , deal_info => DealInfo
+        , reset_the_road => ResetTheRoad
+        , win_zones => WinZones
+        , result_type => ResultType
         , result => Result
     }).

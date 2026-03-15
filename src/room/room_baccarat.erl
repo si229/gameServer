@@ -81,16 +81,18 @@ handle_state(?settlement, CutOffTime, #room_state{game_state =
 } = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Payout = game_baccarat:payout_calculation(GameType, PlayerCards, BankerCards),
+    WinZones = lists:usort([K || {K, _} <- Payout]),
+    ResultType = game_baccarat:result_type(PlayerCards,BankerCards),
     NewGuestRoleList = lists:map(fun(#room_role{bet_info = BetInfo, bonus_credits = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
-        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
+        Msg = game_proto_util:phase_settle_push(?settlement, DTime, false, DealInfo, WinZones, ResultType, Profit),
         Pid ! {settle, Msg, {?GUEST, Profit}},
         Role#room_role{bonus_credits = Chips + Profit, bet_info = []}
                                  end, GuestRoleList),
 
     NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, real_money = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
-        Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
+        Msg = game_proto_util:phase_settle_push(?settlement, DTime, false, DealInfo, WinZones, ResultType, Profit),
         Pid ! {settle, Msg, {?NORMAL, Profit}},
         Role#room_role{real_money = Chips + Profit, bet_info = []}
                                   end, NormalRoleList),
