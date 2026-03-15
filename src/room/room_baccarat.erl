@@ -43,7 +43,9 @@ handle_state(?dealing, CutOffTime, #room_state{
     {PlayerCards, BankerCards, NewDeck} = game_baccarat:deal(Deck),
     {HashValue, Str, Timestamp, RandomStr, CardStr} = game_baccarat:gen_hash(PlayerCards, BankerCards),
     DealInfo = #{hash_value => HashValue, str => Str, timestamp => Timestamp
-        , random_str => RandomStr, card_str => CardStr},
+        , random_str => RandomStr, card_str => CardStr,player_cards=>PlayerCards,banker_cards=>BankerCards},
+
+
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
     Msg = game_proto_util:phase_change_push(?dealing, DTime, false, DealInfo, none),
     room_srv:broadcast(Msg, State),

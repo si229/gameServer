@@ -138,7 +138,7 @@ gen_hash(PlayerCards, BankerCards) ->
     L = list_to_binary(
         S
     ),
-    {game_util:sha256_hex(L), L, Timestamp, RandomStr, Str}.
+    {game_util:sha256_hex(L), L, Timestamp, RandomStr, list_to_binary(Str)}.
 
 
 

@@ -116,7 +116,7 @@
 %% 下注请求
 -record(betting_req,
 {
-    mode,
+    mode,  %% 1 试玩  2 正式
     amount,
     zone
 }).

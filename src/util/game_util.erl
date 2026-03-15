@@ -23,7 +23,7 @@ random_string() ->
 
 sha256_hex(InputBin) ->
     Hash = sha256(InputBin),
-    lists:flatten([io_lib:format("~2.16.0B", [X]) || <<X>> <= Hash]).
+    list_to_binary(lists:flatten([io_lib:format("~2.16.0B", [X]) || <<X>> <= Hash])).
 
 sha256(InputBin) ->
     crypto:hash(sha256, InputBin).
