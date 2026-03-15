@@ -111,7 +111,9 @@
     cut_off_time,
     reset_the_road,
     deal_info,
-    result     %% 结算阶段推送
+    win_zones = [],
+    result_type = 0,
+    result = 0     %% 玩家结算值
 }).
 
 %% 下注请求
