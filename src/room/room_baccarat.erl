@@ -164,7 +164,7 @@ handle_message(_Msg, State) -> {reply, ok, State}.
 
 
 phase_info() ->
-    [{?preparation, 2000}, {?dealing, 1000}, {?betting, 15000}, {?settlement, 5000}].
+    [{?preparation, 2000}, {?dealing, 1000}, {?betting, 15000}, {?settlement, 10000}].
 
 
 next_state(?settlement) ->
