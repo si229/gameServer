@@ -25,15 +25,16 @@ init(#room_state{} = State) ->
 
 handle_state(?preparation, CutOffTime, #room_state{game_state = #game_state{deck = Deck} = GameState} = State) ->
     DTime = CutOffTime + ?MILLI_TIMESTAMP,
+    RoundId = game_server_id:next_id(),
     case game_baccarat:try_reshuffle_the_shoe(Deck) of
         {true, NewDeck} ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, true),
+            Msg = game_proto_util:phase_pre_push(?preparation, DTime, RoundId, true),
             room_srv:broadcast(Msg, State),
-            State#room_state{phase_state = {?preparation, DTime}, game_state = GameState#game_state{deck = NewDeck}};
+            State#room_state{round_id = RoundId, phase_state = {?preparation, DTime}, game_state = GameState#game_state{deck = NewDeck}};
         _ ->
-            Msg = game_proto_util:phase_change_push(?preparation, DTime, false),
+            Msg = game_proto_util:phase_pre_push(?preparation, DTime, RoundId, false),
             room_srv:broadcast(Msg, State),
-            State#room_state{phase_state = {?preparation, DTime}}
+            State#room_state{round_id = RoundId, phase_state = {?preparation, DTime}}
     end;
 
 
@@ -74,7 +75,7 @@ handle_state(?betting, CutOffTime, #room_state{} = State) ->
 
 
 handle_state(?settlement, CutOffTime, #room_state{game_state =
-#game_state{deal_info = DealInfo, player_cards = PlayerCards, banker_cards = BankerCards}
+#game_state{deal_info = DealInfo, player_cards = PlayerCards, banker_cards = BankerCards, deck = Deck}
     , guest_role_list = GuestRoleList, play_type = PlayType,
     normal_role_list = NormalRoleList, game_type = GameType
 } = State) ->
@@ -84,19 +85,21 @@ handle_state(?settlement, CutOffTime, #room_state{game_state =
         Profit = game_baccarat:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
         Pid ! {settle, Msg, {?GUEST, Profit}},
-        Role#room_role{bonus_credits = Chips + Profit}
+        Role#room_role{bonus_credits = Chips + Profit, bet_info = []}
                                  end, GuestRoleList),
 
     NewNormalRoleList = lists:map(fun(#room_role{bet_info = BetInfo, real_money = Chips, pid = Pid} = Role) ->
         Profit = game_baccarat:settlement(BetInfo, Payout),
         Msg = game_proto_util:phase_change_push(?settlement, DTime, false, DealInfo, Profit),
         Pid ! {settle, Msg, {?NORMAL, Profit}},
-        Role#room_role{real_money = Chips + Profit}
+        Role#room_role{real_money = Chips + Profit, bet_info = []}
                                   end, NormalRoleList),
-
     room_road:add_road(PlayType, GameType, {[BetZone || {BetZone, _Odds} <- Payout], PlayerCards, BankerCards}),
-
-    State#room_state{phase_state = {?settlement, DTime}, guest_role_list = NewGuestRoleList, normal_role_list = NewNormalRoleList}.
+    State#room_state{phase_state = {?settlement, DTime}
+        , guest_role_list = NewGuestRoleList
+        , normal_role_list = NewNormalRoleList
+        , game_state = #game_state{deck = Deck}
+    }.
 
 handle_message({bet, {Account, ?GUEST, Zone, Amount}}
     , State = #room_state{guest_role_list = GuestRoleList
@@ -115,6 +118,7 @@ handle_message({bet, {Account, ?GUEST, Zone, Amount}}
                     Pid ! {send, SMsg};
                     true ->
                         Msg = game_proto_util:bet(true, Amount, Zone, NewBetAmount, NewRoomBetAmount, ?ok),
+                        ?WARNING("## ~p", [{Account, Amount, NewBetAmount, NewRoomBetAmount}]),
                         Pid ! {send, Msg}
                 end
                           end, GuestRoleList),

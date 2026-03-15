@@ -24,7 +24,8 @@
     bet/3,
     bet/6,
     roads/0,
-    roads/2
+    roads/2,
+    phase_pre_push/4
 ]).
 
 login_resp(#user{account = Account, bonus_credits = BonusCredits, real_money = RealMoney}, ReconnectInfo) ->
@@ -79,6 +80,16 @@ roads() ->
     jsx:encode(Msg).
 
 %% 阶段变更信息
+
+phase_pre_push(Phase, CutOffTime, RoundId, ResetTheRoad) ->
+    jsx:encode(#{msg_id => phase_change_push, phase => Phase
+        , cut_off_time => CutOffTime
+        , reset_the_road => ResetTheRoad
+        , result => none
+        , deal_info => none
+        , round_id => RoundId
+    }).
+
 phase_change_push(Phase, CutOffTime, ResetTheRoad) ->
     jsx:encode(#{msg_id => phase_change_push, phase => Phase
         , cut_off_time => CutOffTime

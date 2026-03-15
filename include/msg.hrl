@@ -107,6 +107,7 @@
 -record(phase_change_push,
 {
     phase,
+    round_id,
     cut_off_time,
     reset_the_road,
     deal_info,

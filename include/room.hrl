@@ -12,8 +12,8 @@
 %%}).
 
 
--record(room_state, {id, play_type, game_type, guest_role_list = []
-    , normal_role_list = [], loop_timer_ref, phase_state,game_state, room_mod
+-record(room_state, {id, play_type, game_type, round_id, guest_role_list = []
+    , normal_role_list = [], loop_timer_ref, phase_state, game_state, room_mod
 }).
 
 
